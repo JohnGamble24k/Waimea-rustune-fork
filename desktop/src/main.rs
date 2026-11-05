@@ -21,6 +21,18 @@ fn eq(player: State<'_, Desktop>) -> String {
     player.eq()
 }
 
+/// `{url, credit}`, or null when no picture was found.
+#[tauri::command(async)]
+fn artwork(
+    artist: String,
+    title: String,
+    station: String,
+    stream: String,
+) -> Option<serde_json::Value> {
+    desktop::artwork(&artist, &title, &station, &stream)
+        .map(|art| serde_json::json!({"url": art.url, "credit": art.credit}))
+}
+
 #[tauri::command(async)]
 fn mouse(player: State<'_, Desktop>, kind: String, x: u16, y: u16) -> bool {
     player.mouse(&kind, x, y)
@@ -73,7 +85,7 @@ fn main() {
         }))
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
-            frame, spectrum, eq, mouse, request, add_music, skins
+            frame, spectrum, eq, artwork, mouse, request, add_music, skins
         ])
         .setup(|app| {
             let handle = app.handle().clone();

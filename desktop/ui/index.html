@@ -6,24 +6,64 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body data-mode="modern">
-<main class="stage">
-  <button id="library-toggle" class="plain" type="button" aria-controls="library" aria-expanded="true" aria-label="Bibliotheek verbergen">
-    <svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><path d="M15 5v14"/></svg>
-  </button>
-  <div class="modern">
+<div class="app">
     <header class="bar" data-tauri-drag-region>
       <svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><path d="M0 50C8 48 14 42 19 33C25 21 34 12 45 12C54 12 60 19 59 27C58 34 50 37 45 33C41 30 42 24 47 24C43 21 37 24 34 31C30 41 36 50 64 48V56H0Z"/></svg>
       <span class="word" data-tauri-drag-region>Waimea</span>
       <span class="grow" data-tauri-drag-region></span>
+      <button id="library-toggle" class="plain" type="button" aria-controls="library" aria-expanded="false" aria-label="Bibliotheek tonen"><svg viewBox="0 0 24 24"><path id="toggle-icon" d="M4 6h16M4 12h16M4 18h10"/></svg></button>
       <button id="minimize" class="plain" type="button" aria-label="Minimaliseren"><svg viewBox="0 0 16 16"><path d="M3 8h10"/></svg></button>
       <button id="close" class="plain" type="button" aria-label="Sluiten"><svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
     </header>
-    <section class="now" aria-live="polite">
-      <h1 id="title">Kies muziek of een radiostation</h1>
-      <p id="artist"></p>
-      <p id="error" role="status"></p>
-    </section>
+  <div class="flipper">
     <div class="sea"><canvas id="wave" aria-hidden="true"></canvas></div>
+    <div class="card">
+    <main class="stage">
+      <div class="modern">
+    <section class="now" aria-live="polite">
+      <figure id="art" hidden>
+        <img id="art-image" alt="">
+        <figcaption id="art-credit"></figcaption>
+      </figure>
+      <div class="words">
+        <h1 id="title">Kies muziek of een radiostation</h1>
+        <p id="artist"></p>
+        <p id="error" role="status"></p>
+      </div>
+    </section>
+      </div>
+  <div class="classic">
+    <canvas id="winamp" width="275" height="116" aria-label="Klassieke speler"></canvas>
+    <p id="loading">Skin laden</p>
+  </div>
+    </main>
+    <section id="library" class="library" aria-label="Bibliotheek">
+  <nav role="tablist" data-tauri-drag-region>
+    <button role="tab" data-source="local" aria-selected="true">Muziek</button>
+    <button role="tab" data-source="radio" aria-selected="false">Radio</button>
+    <button role="tab" data-source="queue" aria-selected="false">Afspeellijst</button>
+    <button role="tab" data-source="eq" aria-selected="false">Equalizer</button>
+    <button role="tab" data-source="skins" aria-selected="false">Uiterlijk</button>
+  </nav>
+  <form id="search" role="search">
+    <input id="query" type="search" autocomplete="off" spellcheck="false" aria-label="Zoeken">
+  </form>
+  <div id="chips" hidden></div>
+  <div id="add">
+    <button id="add-files" type="button">Bestanden toevoegen</button>
+    <button id="add-folder" type="button">Map toevoegen</button>
+  </div>
+  <ul id="results" aria-live="polite"></ul>
+  <section id="eq" class="eq" aria-label="Equalizer" hidden>
+      <div class="eq-head">
+        <label class="switch"><input id="eq-on" type="checkbox"> Equalizer aan</label>
+        <select id="eq-preset" aria-label="Voorinstelling"></select>
+      </div>
+      <div id="eq-bands" class="eq-bands"></div>
+    </section>
+  <p id="message" role="status"></p>
+</section>
+  </div></div>
     <section class="controls" aria-label="Bediening">
       <div class="seek">
         <span id="elapsed">0:00</span>
@@ -47,38 +87,7 @@
         </div>
       </div>
     </section>
-    <section id="eq" class="eq" aria-label="Equalizer" hidden>
-      <div class="eq-head">
-        <label class="switch"><input id="eq-on" type="checkbox"> Equalizer aan</label>
-        <select id="eq-preset" aria-label="Voorinstelling"></select>
-      </div>
-      <div id="eq-bands" class="eq-bands"></div>
-    </section>
-  </div>
-  <div class="classic">
-    <canvas id="winamp" width="275" height="116" aria-label="Klassieke speler"></canvas>
-    <p id="loading">Skin laden</p>
-  </div>
-</main>
-<section id="library" class="library" aria-label="Bibliotheek">
-  <div id="library-handle" role="separator" aria-orientation="vertical" aria-label="Breedte van de bibliotheek" tabindex="0"></div>
-  <nav role="tablist" data-tauri-drag-region>
-    <button role="tab" data-source="local" aria-selected="true">Muziek</button>
-    <button role="tab" data-source="radio" aria-selected="false">Radio</button>
-    <button role="tab" data-source="queue" aria-selected="false">Afspeellijst</button>
-    <button role="tab" data-source="skins" aria-selected="false">Uiterlijk</button>
-  </nav>
-  <form id="search" role="search">
-    <input id="query" type="search" autocomplete="off" spellcheck="false" aria-label="Zoeken">
-  </form>
-  <div id="chips" hidden></div>
-  <div id="add">
-    <button id="add-files" type="button">Bestanden toevoegen</button>
-    <button id="add-folder" type="button">Map toevoegen</button>
-  </div>
-  <ul id="results" aria-live="polite"></ul>
-  <p id="message" role="status"></p>
-</section>
+</div>
 <script src="app.js"></script>
 </body>
 </html>
