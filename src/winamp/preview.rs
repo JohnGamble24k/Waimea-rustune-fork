@@ -15,9 +15,6 @@ use super::sprites as sp;
 use super::tests::sample_view;
 use super::{WinampUiState, Window};
 
-/// Draw `text` with TEXT.BMP glyph shapes recoloured to `color` (the
-/// terminal draws real playlist text; the preview approximates it).
-
 fn render_skin(skin: &WinampSkin) -> Canvas {
     let view = sample_view(PlayStatus::Playing);
     let mut ui = WinampUiState::new();

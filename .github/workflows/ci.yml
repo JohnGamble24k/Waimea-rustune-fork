@@ -294,7 +294,7 @@ jobs:
               return "boolean true" in r.stdout
           wait_for(owned, DEST + " on the bus")
 
-          if 'string "waimea"' not in get("org.mpris.MediaPlayer2", "Identity"):
+          if 'string "Waimea"' not in get("org.mpris.MediaPlayer2", "Identity"):
               fail("Identity")
           wait_for(lambda: '"tone"' in get(PLAYER, "Metadata"), "Metadata with the track title")
           if "mpris:trackid" not in get(PLAYER, "Metadata"):
@@ -345,7 +345,7 @@ jobs:
                   proc.kill()
               sys.exit(1)
           wait_for(owned, DEST + " from the daemon")
-          if 'string "waimea"' not in get("org.mpris.MediaPlayer2", "Identity"):
+          if 'string "Waimea"' not in get("org.mpris.MediaPlayer2", "Identity"):
               fail("daemon Identity")
           wait_for(lambda: '"tone"' in get(PLAYER, "Metadata"), "daemon Metadata with the track title")
           send("org.freedesktop.DBus.Properties.Set", "string:" + PLAYER, "string:Volume", "variant:double:0.5")

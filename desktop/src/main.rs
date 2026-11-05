@@ -62,7 +62,9 @@ fn main() {
             }
         }))
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![frame, mouse, request, add_music, skins])
+        .invoke_handler(tauri::generate_handler![
+            frame, mouse, request, add_music, skins
+        ])
         .setup(|app| {
             let handle = app.handle().clone();
             match Desktop::start(move || handle.exit(0)) {
