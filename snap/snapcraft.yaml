@@ -1,20 +1,19 @@
 name: waimea
-title: waimea
+title: Waimea
 base: core24
 adopt-info: waimea
-summary: Terminal music player with radio, podcasts and Winamp skins
+summary: Music and internet radio in a skinnable, retro-modern player
 description: |
-  A lightweight terminal music player: native Rust audio engine, visualizer,
-  synced lyrics, Internet radio, podcasts, Subsonic and Jellyfin, and
-  pixel-accurate Winamp skins, all in your terminal.
+  Waimea is a lightweight music player named after the waves of Hawaii. It opens
+  with a few chords of steel guitar and shows your music in a compact, skinnable
+  player with a visualizer and a 10-band equalizer.
 
-  The snap is strictly confined. It plays local files from your home folder
-  and removable media (connect `removable-media` with
-  `sudo snap connect waimea:removable-media`) and streams over the network.
-  Audio goes through PulseAudio or PipeWire. Online search (yt-dlp) and the
-  ffmpeg fallback for exotic formats are not available in the snap, because
-  a strict snap cannot run tools installed on the host; use another install
-  method if you need them.
+  - Plays your music library: MP3, FLAC, OGG, WAV, M4A and more
+  - Finds and plays internet radio stations from around the world
+  - Comes with its own deep-sea skin and loads classic .wsz skins
+  - Can be controlled from scripts and AI agents with `waimea.cli`
+
+  Waimea is open source and based on rustune by dzulfikar08.
 license: MIT
 website: https://github.com/JohnGamble24k/Waimea
 source-code: https://github.com/JohnGamble24k/Waimea
@@ -33,21 +32,42 @@ layout:
     bind: $SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/alsa-lib
   /usr/share/alsa:
     bind: $SNAP/usr/share/alsa
+  /usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1:
+    bind: $SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1
 
 apps:
+  # The desktop app; `snap run waimea` or the Waimea icon.
   waimea:
+    command: bin/waimea-desktop
+    command-chain: [bin/pulse-launch]
+    extensions: [gnome]
+    environment:
+      ALSA_CONFIG_PATH: $SNAP/etc/asound.conf
+    plugs: [audio-playback, network, home, removable-media, single-instance-plug]
+    slots: [mpris, single-instance]
+  # Remote control and terminal player, for scripts and agents.
+  cli:
     command: bin/waimea
     command-chain: [bin/pulse-launch]
     environment:
       ALSA_CONFIG_PATH: $SNAP/etc/asound.conf
-      LD_LIBRARY_PATH: $SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR:$SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pulseaudio
+      LD_LIBRARY_PATH: $SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR:$SNAP/usr/lib
     plugs: [audio-playback, network, home, removable-media]
-    slots: [mpris]
+
+plugs:
+  single-instance-plug:
+    interface: dbus
+    bus: session
+    name: org.io_github_johngamble24k_waimea.SingleInstance
 
 slots:
   mpris:
     interface: mpris
     name: waimea
+  single-instance:
+    interface: dbus
+    bus: session
+    name: org.io_github_johngamble24k_waimea.SingleInstance
 
 parts:
   waimea:
@@ -84,6 +104,13 @@ parts:
       - usr/lib/*/libXdmcp.so.*
       - usr/lib/*/libbsd.so.*
       - usr/lib/*/libmd.so.*
+
+  desktop:
+    plugin: rust
+    source: .
+    rust-path: [desktop]
+    build-packages: [libasound2-dev, pkg-config, libwebkit2gtk-4.1-dev, librsvg2-dev, libssl-dev, build-essential, file]
+    stage-packages: [libwebkit2gtk-4.1-0]
 
   # ALSA config that routes the default device to PulseAudio, and the
   # launcher that points libpulse at the host's socket.

@@ -107,7 +107,6 @@ const message = document.getElementById('message');
 const SOURCES = {
   local: { placeholder: 'Zoek in je muziek', live: true, empty: 'Geen muziek gevonden. Voeg bestanden of een map toe.' },
   radio: { placeholder: 'Zoek een radiostation', start: 'jazz', chips: ['Jazz', 'Hawaii', 'Lofi', 'Klassiek', 'Nieuws', 'NPO'], empty: 'Geen stations gevonden. Probeer een andere zoekterm.' },
-  online: { placeholder: 'Zoek op YouTube en druk op Enter', empty: 'Geen video’s gevonden. Probeer een andere zoekterm.' },
 };
 
 let source = 'local';
@@ -157,7 +156,7 @@ function row(hit, text) {
 async function search(text) {
   const id = ++searchId;
   const from = source;
-  say(from === 'online' ? 'Zoeken op YouTube...' : 'Zoeken...');
+  say('Zoeken...');
   try {
     const reply = await ask({ search: { source: from, query: text, limit: from === 'local' ? 500 : 30, then: 'show' } });
     if (id !== searchId) return;

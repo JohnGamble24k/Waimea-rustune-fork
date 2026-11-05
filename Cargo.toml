@@ -11,7 +11,7 @@ categories = ["command-line-utilities", "multimedia::audio"]
 readme = "README.md"
 # Keep the published crate to what builds and tests it (README.md is read by
 # a test); screenshots, icons, docs and packaging files stay out.
-include = ["/src/**/*.rs", "/Cargo.toml", "/Cargo.lock", "/README.md", "/LICENSE"]
+include = ["/src/**/*.rs", "/src/skin/waimea.wsz", "/Cargo.toml", "/Cargo.lock", "/README.md", "/LICENSE"]
 
 # cargo-binstall: the release archives (`waimea-<version>-<target>.tar.gz`,
 # `.zip` on Windows) hold the binary in a `waimea-<version>-<target>/` folder.

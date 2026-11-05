@@ -20,8 +20,9 @@ const MAX_SKIN_BYTES: u64 = 16 * 1024 * 1024;
 const WEBAMP_GRAPHQL: &str = "https://skins.webamp.org/graphql";
 const SKIN_CDN: &str = "https://r2.webampskins.org/skins";
 /// Winamp 2.91 base skin on the webamp museum.
-pub const DEFAULT_SKIN_MD5: &str = "5e4f10275dcb1fb211d4a8b4f1bda236";
-pub const DEFAULT_SKIN_FILE: &str = "base-2.91.wsz";
+pub const DEFAULT_SKIN_FILE: &str = "waimea.wsz";
+/// Our own skin (`assets/skin/make_skin.py`), so the player looks right offline.
+const DEFAULT_SKIN: &[u8] = include_bytes!("skin/waimea.wsz");
 
 static AGENT: LazyLock<ureq::Agent> = LazyLock::new(|| {
     ureq::Agent::config_builder()
@@ -293,13 +294,16 @@ pub fn download_skin(md5: &str, filename: &str, skins_dir: &Path) -> Result<Path
     Ok(path)
 }
 
-/// Fetch the base Winamp skin if it is not installed yet. Returns the path
-/// when it was downloaded now.
+/// Install the default skin if it is not there yet. Returns the path when it
+/// was installed now.
 pub fn ensure_default_skin(skins_dir: &Path) -> Result<Option<PathBuf>> {
     if skins_dir.join(DEFAULT_SKIN_FILE).exists() {
         return Ok(None);
     }
-    download_skin(DEFAULT_SKIN_MD5, DEFAULT_SKIN_FILE, skins_dir).map(Some)
+    std::fs::create_dir_all(skins_dir)?;
+    let path = skins_dir.join(DEFAULT_SKIN_FILE);
+    std::fs::write(&path, DEFAULT_SKIN)?;
+    Ok(Some(path))
 }
 
 /// Lowercase hex md5 of `bytes` (the museum's skin id).
@@ -492,7 +496,7 @@ mod tests {
     fn fetch_first_page_from_museum() {
         let dir = std::env::temp_dir();
         let page = fetch_skin_list(SkinListing::Museum, 0, 5, &dir).unwrap();
-        assert_eq!(page.entries[0].md5, DEFAULT_SKIN_MD5);
+        assert_eq!(page.entries[0].md5, "5e4f10275dcb1fb211d4a8b4f1bda236");
         assert!(page.total.unwrap() > 100_000);
         let found = search_skins("zelda", 0, 5, &dir).unwrap();
         assert!(!found.entries.is_empty());

@@ -45,6 +45,38 @@ pub fn draw_text(
     }
 }
 
+/// TEXT.BMP text in `color`, keeping what is behind the glyphs.
+pub fn draw_text_colored(
+    c: &mut Canvas,
+    skin: &WinampSkin,
+    text: &str,
+    x: i32,
+    y: i32,
+    max_x: i32,
+    color: Rgba,
+) {
+    let Some(font) = skin.sheet(Sheet::Text) else {
+        return;
+    };
+    let bg = font.get(152, 2).unwrap_or([0, 0, 0, 255]);
+    let mut cx = x;
+    for ch in text.chars() {
+        if cx + sp::CHAR_W as i32 > max_x {
+            break;
+        }
+        let (row, col) = sp::glyph_cell(ch);
+        for gy in 0..sp::CHAR_H {
+            for gx in 0..sp::CHAR_W {
+                let p = font.get(col * sp::CHAR_W + gx, row * sp::CHAR_H + gy);
+                if p.is_some_and(|p| p != bg) {
+                    c.set(cx + gx as i32, y + gy as i32, color);
+                }
+            }
+        }
+        cx += sp::CHAR_W as i32;
+    }
+}
+
 /// "m:ss" (minutes unpadded), webamp `getTimeStr`.
 pub fn write_time(out: &mut String, secs: u64) {
     let _ = write!(out, "{}:{:02}", secs / 60, secs % 60);

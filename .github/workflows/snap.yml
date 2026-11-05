@@ -40,13 +40,13 @@ jobs:
           # resolve inside the snap (or its core24 base).
           snap run --shell waimea -c 'ldd "$SNAP/bin/waimea" "$SNAP"/usr/lib/*/alsa-lib/*.so "$SNAP"/usr/lib/*/libpulse.so.0' | tee ldd.txt
           ! grep 'not found' ldd.txt
-      - name: waimea --version / --help / doctor
+      - name: waimea.cli --version / --help / doctor
         run: |
           version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n1)
-          out=$(waimea --version)
+          out=$(waimea.cli --version)
           echo "$out"
           test "$out" = "waimea $version"
-          waimea --help > help.txt && grep -q USAGE help.txt
+          waimea.cli --help > help.txt && grep -q USAGE help.txt
 
       - name: Play a tone through PulseAudio
         run: |

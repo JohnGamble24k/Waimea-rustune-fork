@@ -6,7 +6,7 @@
 use std::time::Duration;
 
 use crate::gfx::encode::{png, Deflater};
-use crate::skin::{Rgba, Sheet, WinampSkin};
+use crate::skin::{Sheet, WinampSkin};
 use crate::view::PlayStatus;
 
 use super::canvas::Canvas;
@@ -17,36 +17,6 @@ use super::{WinampUiState, Window};
 
 /// Draw `text` with TEXT.BMP glyph shapes recoloured to `color` (the
 /// terminal draws real playlist text; the preview approximates it).
-fn draw_tinted(
-    c: &mut Canvas,
-    skin: &WinampSkin,
-    text: &str,
-    x: i32,
-    y: i32,
-    max_x: i32,
-    color: Rgba,
-) {
-    let Some(font) = skin.sheet(Sheet::Text) else {
-        return;
-    };
-    let bg = font.get(152, 2).unwrap_or([0, 0, 0, 255]);
-    let mut cx = x;
-    for ch in text.chars() {
-        if cx + sp::CHAR_W as i32 > max_x {
-            break;
-        }
-        let (row, col) = sp::glyph_cell(ch);
-        for gy in 0..sp::CHAR_H {
-            for gx in 0..sp::CHAR_W {
-                let p = font.get(col * sp::CHAR_W + gx, row * sp::CHAR_H + gy);
-                if p.is_some_and(|p| p != bg) {
-                    c.set(cx + gx as i32, y + gy as i32, color);
-                }
-            }
-        }
-        cx += sp::CHAR_W as i32;
-    }
-}
 
 fn render_skin(skin: &WinampSkin) -> Canvas {
     let view = sample_view(PlayStatus::Playing);
@@ -102,7 +72,7 @@ fn render_skin(skin: &WinampSkin) -> Canvas {
         label.clear();
         compose::write_time(&mut label, item.duration.unwrap_or(0));
         let dur_x = area.x + area.w as i32 - 3 - label.chars().count() as i32 * sp::CHAR_W as i32;
-        draw_tinted(
+        compose::draw_text_colored(
             &mut out,
             skin,
             &label,
@@ -118,7 +88,7 @@ fn render_skin(skin: &WinampSkin) -> Canvas {
             label.push_str(" - ");
         }
         label.push_str(&item.title);
-        draw_tinted(
+        compose::draw_text_colored(
             &mut out,
             skin,
             &label,

@@ -77,6 +77,8 @@ Sources that only offer HLS or Opus (some SoundCloud tracks) still go through ff
 
 Waimea also runs as a desktop app, with no terminal in sight: the Winamp windows at double size in a real window, next to a library for your music, radio stations and YouTube search. The code lives in [`desktop/`](desktop/) and uses [Tauri](https://tauri.app). It drives the same player as the terminal version, so the remote-control commands below work on it too. Only one Waimea runs at a time.
 
+It ships with Waimea's own deep-sea skin ([drawn by a script](assets/skin/make_skin.py)); `.wsz` skins work too. YouTube is parked in the desktop app for now.
+
 To build it on Debian or Ubuntu:
 
 ```bash

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Waimea
+GenericName=Music Player
+Comment=Music and internet radio with classic skins
+Exec=waimea
+Icon=${SNAP}/meta/gui/waimea.svg
+Terminal=false
+StartupWMClass=waimea-desktop
+Categories=AudioVideo;Audio;Player;
+Keywords=music;player;radio;skins;

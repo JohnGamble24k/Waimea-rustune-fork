@@ -21,11 +21,11 @@ use crate::event::AppEvent;
 use crate::gfx::{GfxPainter, Protocol};
 use crate::ipc::{self, IpcServer};
 use crate::playback::Playback;
-use crate::skin::{Sheet, WinampSkin};
+use crate::skin::WinampSkin;
 use crate::state::SessionState;
 use crate::view::PlayerView;
 use crate::winamp::compose::{self, RowSpan};
-use crate::winamp::sprites::{px, WINDOW_W};
+use crate::winamp::sprites::{CHAR_W, WINDOW_W};
 use crate::winamp::{Region, WinampUiState, Window, WindowGeom};
 
 const MAIN_H: u32 = 116;
@@ -113,35 +113,34 @@ fn render_playlist(skin: &WinampSkin, view: &PlayerView, ui: &mut WinampUiState,
     });
     ui.compose_playlist(skin, view, pl_h);
 
-    // ponytail: TEXT.BMP has one colour per skin, so the playing track gets a
-    // marker instead of PLEDIT.TXT's colour. Tint the glyphs if that falls short.
-    let font = skin.sheet(Sheet::Text);
     let canvas = ui.canvas_mut(Window::Playlist);
     for i in 0..visible {
         let idx = first + i;
         let Some(item) = view.playlist.get(idx) else {
             break;
         };
-        let mark = if view.current == Some(idx) { ">" } else { " " };
+        let (color, _) = compose::row_colors(skin, view, idx);
         let title = match &item.artist {
-            Some(artist) => format!("{mark}{}. {artist} - {}", idx + 1, item.title),
-            None => format!("{mark}{}. {}", idx + 1, item.title),
+            Some(artist) => format!("{}. {artist} - {}", idx + 1, item.title),
+            None => format!("{}. {}", idx + 1, item.title),
         };
         let y = row_y(i) + 2;
-        let right = area.x + area.w as i32 - 2;
         let mut time = String::new();
         if let Some(secs) = item.duration {
             compose::write_time(&mut time, secs);
         }
-        let time_x = right - time.len() as i32 * 5;
-        let clip = px(
+        let right = area.x + area.w as i32 - 2;
+        let time_x = right - time.chars().count() as i32 * CHAR_W as i32;
+        compose::draw_text_colored(
+            canvas,
+            skin,
+            &title,
             area.x + 2,
             y,
-            (time_x - area.x - 4).max(0) as u32,
-            ROW_H as u32,
+            time_x - CHAR_W as i32,
+            color,
         );
-        compose::draw_text(canvas, font, &title, area.x + 2, y, Some(clip));
-        compose::draw_text(canvas, font, &time, time_x, y, None);
+        compose::draw_text_colored(canvas, skin, &time, time_x, y, right + 1, color);
     }
 }
 
@@ -225,6 +224,10 @@ impl Desktop {
                 config.theme = "Winamp".into();
                 config.onboarding_done = true;
                 state.theme = Some("Winamp".into());
+                // The old download-on-first-run default gives way to our own.
+                if state.skin.as_deref() == Some("base-2.91.wsz") {
+                    state.skin = None;
+                }
                 let volume = state.volume;
                 if let Ok(rt) = crate::runtime() {
                     rt.block_on(async move {
