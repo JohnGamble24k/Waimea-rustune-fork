@@ -74,6 +74,9 @@ parts:
     plugin: rust
     source: .
     build-snaps: [rustup]
+    build-environment:
+      # The gnome extension replaces PATH, which hides the rustup snap.
+      - PATH: /snap/bin:$PATH
     build-packages: [libasound2-dev, pkg-config]
     stage-packages: [libasound2t64, libasound2-data, libasound2-plugins]
     override-pull: |
@@ -111,6 +114,9 @@ parts:
     source: .
     rust-path: [desktop]
     build-snaps: [rustup]
+    build-environment:
+      # The gnome extension replaces PATH, which hides the rustup snap.
+      - PATH: /snap/bin:$PATH
     build-packages: [libasound2-dev, pkg-config, libwebkit2gtk-4.1-dev, librsvg2-dev, libssl-dev, build-essential, file]
     stage-packages: [libwebkit2gtk-4.1-0]
 
