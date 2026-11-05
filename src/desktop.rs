@@ -280,6 +280,28 @@ impl Desktop {
         image
     }
 
+    /// Spectrum magnitudes as little-endian f32 (see `AppEvent`).
+    pub fn spectrum(&self) -> Vec<u8> {
+        let (reply, answer) = sync_channel(1);
+        if self.tx.send(AppEvent::DesktopSpectrum(reply)).is_err() {
+            return Vec::new();
+        }
+        answer
+            .recv_timeout(Duration::from_secs(1))
+            .unwrap_or_default()
+    }
+
+    /// Equalizer settings and preset names as JSON.
+    pub fn eq(&self) -> String {
+        let (reply, answer) = sync_channel(1);
+        if self.tx.send(AppEvent::DesktopEq(reply)).is_err() {
+            return "{}".into();
+        }
+        answer
+            .recv_timeout(Duration::from_secs(1))
+            .unwrap_or_else(|_| "{}".into())
+    }
+
     /// Mouse input in stacked-image pixels. Returns true when the user asked
     /// to open files (the eject button).
     pub fn mouse(&self, kind: &str, x: u16, y: u16) -> bool {

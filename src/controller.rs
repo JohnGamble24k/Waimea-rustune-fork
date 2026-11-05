@@ -126,6 +126,8 @@ pub struct Controller {
     pending_local: Vec<(Search, Reply)>,
 }
 
+const DESKTOP_BANDS: usize = 48;
+
 fn answer(reply: Reply, line: String) {
     // The client may have given up already; nothing to do then.
     let _ = reply.send(line);
@@ -2089,6 +2091,26 @@ impl Controller {
                 let _ = reply.send(image);
                 return changed;
             }
+            AppEvent::DesktopSpectrum(reply) => {
+                let (changed, _) = self.desktop_tick();
+                // Enough bands for a smooth curve; a no-op once set.
+                self.app.analyzer.set_bands(DESKTOP_BANDS);
+                let bytes = self
+                    .app
+                    .analyzer
+                    .spectrum()
+                    .iter()
+                    .flat_map(|v| v.to_le_bytes())
+                    .collect();
+                let _ = reply.send(bytes);
+                return changed;
+            }
+            AppEvent::DesktopEq(reply) => {
+                let names: Vec<&str> = eq_presets::PRESETS.iter().map(|(n, _)| *n).collect();
+                let json = serde_json::json!({"eq": self.app.eq, "presets": names});
+                let _ = reply.send(json.to_string());
+                return false;
+            }
             AppEvent::DesktopMouse { kind, x, y, reply } => {
                 let _ = reply.send(self.desktop_mouse(&kind, x, y));
             }
@@ -2413,6 +2435,17 @@ impl Controller {
     /// The Winamp windows for the desktop app, after the same time-driven
     /// updates as [`Self::on_tick`]. Also returns whether the status changed.
     fn desktop_frame(&mut self) -> (Vec<u8>, bool) {
+        let (changed, playing) = self.desktop_tick();
+        let mut image = Vec::new();
+        let view = self.app.player_view();
+        if let Some(skin) = self.app.winamp_skin.as_ref().filter(|s| s.has_bitmaps()) {
+            crate::desktop::render(skin, &view, &mut self.winamp_ui, playing, &mut image);
+        }
+        (image, changed)
+    }
+
+    /// Clock and analyzer updates; returns (status changed, playing).
+    fn desktop_tick(&mut self) -> (bool, bool) {
         let mut changed = self.app.on_tick();
         changed |= self.sync_position();
         let playing = self.app.play_status() == PlayStatus::Playing && self.started;
@@ -2420,12 +2453,7 @@ impl Controller {
         let dt = now - self.vis_at;
         self.vis_at = now;
         self.app.analyzer.update(self.playback.tap(), dt, playing);
-        let mut image = Vec::new();
-        let view = self.app.player_view();
-        if let Some(skin) = self.app.winamp_skin.as_ref().filter(|s| s.has_bitmaps()) {
-            crate::desktop::render(skin, &view, &mut self.winamp_ui, playing, &mut image);
-        }
-        (image, changed)
+        (changed, playing)
     }
 
     /// Returns true when the click asked to open files: the app has a native

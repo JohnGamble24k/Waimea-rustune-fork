@@ -12,6 +12,16 @@ fn frame(player: State<'_, Desktop>) -> Response {
 }
 
 #[tauri::command(async)]
+fn spectrum(player: State<'_, Desktop>) -> Response {
+    Response::new(player.spectrum())
+}
+
+#[tauri::command(async)]
+fn eq(player: State<'_, Desktop>) -> String {
+    player.eq()
+}
+
+#[tauri::command(async)]
 fn mouse(player: State<'_, Desktop>, kind: String, x: u16, y: u16) -> bool {
     player.mouse(&kind, x, y)
 }
@@ -63,7 +73,7 @@ fn main() {
         }))
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
-            frame, mouse, request, add_music, skins
+            frame, spectrum, eq, mouse, request, add_music, skins
         ])
         .setup(|app| {
             let handle = app.handle().clone();

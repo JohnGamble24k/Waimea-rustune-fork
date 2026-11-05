@@ -18,6 +18,10 @@ pub enum AppEvent {
     Term(crossterm::event::Event),
     /// The desktop app wants the current image (`crate::desktop::render`).
     DesktopFrame(std::sync::mpsc::SyncSender<Vec<u8>>),
+    /// The desktop app's wave: spectrum magnitudes as little-endian f32.
+    DesktopSpectrum(std::sync::mpsc::SyncSender<Vec<u8>>),
+    /// The desktop app's equalizer panel: settings and preset names as JSON.
+    DesktopEq(std::sync::mpsc::SyncSender<String>),
     /// Mouse input from the desktop app; answers whether to open files.
     DesktopMouse {
         kind: String,
