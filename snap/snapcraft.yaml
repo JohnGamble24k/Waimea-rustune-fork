@@ -70,14 +70,10 @@ slots:
     name: org.io_github_johngamble24k_waimea.SingleInstance
 
 parts:
+  # Sound libraries and the version; the program itself is built below.
   waimea:
-    plugin: rust
+    plugin: nil
     source: .
-    build-snaps: [rustup]
-    build-environment:
-      # The gnome extension replaces PATH, which hides the rustup snap.
-      - PATH: /snap/bin:$PATH
-    build-packages: [libasound2-dev, pkg-config]
     stage-packages: [libasound2t64, libasound2-data, libasound2-plugins]
     override-pull: |
       craftctl default
@@ -85,7 +81,6 @@ parts:
     # libasound2-plugins drags in ffmpeg, jack and more for plugins waimea
     # never loads; keep alsa-lib, its PulseAudio plugin and libpulse's deps.
     prime:
-      - bin/waimea
       - usr/share/alsa
       - usr/lib/*/libasound.so.2*
       - usr/lib/*/alsa-lib/libasound_module_pcm_pulse.so
@@ -109,16 +104,20 @@ parts:
       - usr/lib/*/libbsd.so.*
       - usr/lib/*/libmd.so.*
 
+  # The rust plugin cannot find its toolchain next to the gnome extension, so
+  # this part installs one itself and builds both programs.
   desktop:
-    plugin: rust
+    plugin: nil
     source: .
-    rust-path: [desktop]
-    build-snaps: [rustup]
-    build-environment:
-      # The gnome extension replaces PATH, which hides the rustup snap.
-      - PATH: /snap/bin:$PATH
-    build-packages: [libasound2-dev, pkg-config, libwebkit2gtk-4.1-dev, librsvg2-dev, libssl-dev, build-essential, file]
+    build-packages: [curl, libasound2-dev, pkg-config, libwebkit2gtk-4.1-dev, librsvg2-dev, libssl-dev, build-essential, file]
     stage-packages: [libwebkit2gtk-4.1-0]
+    override-build: |
+      export RUSTUP_HOME="$CRAFT_PART_BUILD/.rustup" CARGO_HOME="$CRAFT_PART_BUILD/.cargo"
+      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable
+      . "$CARGO_HOME/env"
+      cargo build --release --locked -p waimea -p waimea-desktop
+      install -Dm755 target/release/waimea "$CRAFT_PART_INSTALL/bin/waimea"
+      install -Dm755 target/release/waimea-desktop "$CRAFT_PART_INSTALL/bin/waimea-desktop"
 
   # ALSA config that routes the default device to PulseAudio, and the
   # launcher that points libpulse at the host's socket.
