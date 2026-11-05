@@ -59,8 +59,10 @@ function showFace(toBack) {
   document.body.classList.toggle('flipped', toBack);
   $('library').inert = !toBack;
   document.querySelector('.stage').inert = toBack;
-  $('library-toggle').setAttribute('aria-expanded', String(toBack));
-  (toBack ? $('flip-back') : $('library-toggle')).focus({ preventScroll: true });
+  const toggle = $('library-toggle');
+  toggle.setAttribute('aria-expanded', String(toBack));
+  toggle.setAttribute('aria-label', toBack ? 'Terug naar de speler' : 'Bibliotheek tonen');
+  $('toggle-icon').setAttribute('d', toBack ? 'M6 6l12 12M18 6L6 18' : 'M4 6h16M4 12h16M4 18h10');
 }
 
 function flip(toBack) {
@@ -82,8 +84,7 @@ function flip(toBack) {
 
 const isFlipped = () => document.body.classList.contains('flipped');
 
-$('library-toggle').addEventListener('click', () => flip(true));
-$('flip-back').addEventListener('click', () => flip(false));
+$('library-toggle').addEventListener('click', () => flip(!isFlipped()));
 addEventListener('keydown', (e) => { if (e.key === 'Escape' && isFlipped()) flip(false); });
 
 // ---- Artwork: the artist's photo or the station's logo on the front.
@@ -376,6 +377,7 @@ async function showEq() {
 }
 
 $('eq-toggle').addEventListener('click', () => {
+  if (isFlipped()) flip(false);
   const panel = $('eq');
   panel.hidden = !panel.hidden;
   $('eq-toggle').setAttribute('aria-expanded', String(!panel.hidden));

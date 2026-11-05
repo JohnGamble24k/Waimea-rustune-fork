@@ -35,8 +35,16 @@ svg { display: block; fill: none; stroke: currentColor; stroke-width: 1.8; strok
 
 svg .solid { fill: currentColor; stroke: none; }
 
-/* One card: the player on the front, the library on the back. */
-body { perspective: 1800px; }
+/* Top bar and controls stay put; only the part between them turns over. */
+.app {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  background: var(--deep);
+}
+
+.flipper { position: relative; min-height: 0; overflow: hidden; perspective: 1800px; }
 
 /* Turn to edge-on, swap faces out of sight, turn back: needs no true 3D
    back faces, which not every web view renders. */
@@ -53,18 +61,6 @@ body.flipped .stage, body:not(.flipped) .library { visibility: hidden; }
 
 .card.landing { transition: transform .3s cubic-bezier(.22, .61, .36, 1); }
 
-#library-toggle {
-  position: absolute;
-  z-index: 2;
-  top: 12px;
-  right: 80px;
-  width: 30px;
-  height: 30px;
-  padding: 5px;
-}
-
-body[data-mode="classic"] #library-toggle { top: 8px; right: 8px; background: rgba(6, 26, 48, .6); }
-
 .stage, .library {
   position: absolute;
   inset: 0;
@@ -72,7 +68,7 @@ body[data-mode="classic"] #library-toggle { top: 8px; right: 8px; background: rg
 }
 
 .stage {
-  background: linear-gradient(170deg, var(--deep) 0%, #0a3a5c 58%, var(--abyss) 100%);
+  background: linear-gradient(175deg, var(--deep) 0%, #0a3a5c 100%);
 }
 
 .modern, .classic { position: absolute; inset: 0; }
@@ -81,9 +77,9 @@ body[data-mode="modern"] .classic, body[data-mode="classic"] .modern { display: 
 
 /* ---- modern player: the wave is the one big thing, the rest stays quiet. */
 
-.modern { display: grid; grid-template-rows: auto auto minmax(90px, 1fr) auto; grid-template-columns: minmax(0, 1fr); }
+.modern { display: grid; grid-template-rows: auto minmax(90px, 1fr); grid-template-columns: minmax(0, 1fr); }
 
-.bar { display: flex; align-items: center; gap: 8px; padding: 12px 12px 0 24px; }
+.bar { display: flex; align-items: center; gap: 8px; padding: 10px 12px 8px 24px; }
 
 .logo { width: 22px; height: 22px; fill: var(--foam); stroke: none; }
 
@@ -107,9 +103,11 @@ body[data-mode="modern"] .classic, body[data-mode="classic"] .modern { display: 
 
 .bar .plain { width: 30px; height: 30px; padding: 6px; }
 
+#library-toggle[aria-expanded="true"] { color: var(--foam); }
+
 #close:hover { background: var(--hibiscus); color: var(--abyss); }
 
-.now { display: flex; align-items: flex-start; gap: clamp(16px, 2.4vw, 32px); padding: clamp(14px, 4vh, 44px) 24px 12px; min-width: 0; }
+.now { display: flex; align-items: flex-start; gap: clamp(16px, 2.4vw, 32px); padding: clamp(10px, 3vh, 32px) 24px 12px; min-width: 0; }
 
 .words { flex: 1; min-width: 0; }
 
@@ -148,11 +146,13 @@ body[data-mode="modern"] .classic, body[data-mode="classic"] .modern { display: 
 #error { margin: 4px 0 0; min-height: 1.4em; color: var(--hibiscus); font-size: 13px; }
 
 /* Absolute, so the bitmap's own size can never push the layout. */
-.sea { position: relative; grid-row: 3; grid-column: 1; min-height: 0; overflow: hidden; }
+.sea { position: relative; grid-row: 2; grid-column: 1; min-height: 0; overflow: hidden; }
 
 #wave { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
 
-.controls { padding: 10px 24px 18px; background: #0b4f70; }
+.controls { position: relative; z-index: 1; padding: 10px 24px 18px; background: #0b4f70; }
+
+body[data-mode="classic"] .controls { display: none; }
 
 .seek { display: grid; grid-template-columns: 3.4em 1fr 3.4em; align-items: center; gap: 10px; font-size: 13px; font-variant-numeric: tabular-nums; }
 
@@ -229,7 +229,7 @@ input[type="range"]:disabled::-webkit-slider-thumb { background: transparent; }
 /* ---- equalizer slides over the wave */
 
 .eq {
-  grid-row: 3;
+  grid-row: 2;
   grid-column: 1;
   z-index: 1;
   display: flex;
@@ -514,7 +514,7 @@ body.library-closed .stage { margin-right: 0; }
 .library {
   display: flex;
   flex-direction: column;
-  padding: 14px clamp(20px, 6vw, 72px) 16px;
+  padding: 8px clamp(20px, 6vw, 72px) 12px;
   background: var(--abyss);
 }
 
