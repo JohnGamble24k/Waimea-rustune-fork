@@ -75,7 +75,7 @@ Sources that only offer HLS or Opus (some SoundCloud tracks) still go through ff
 
 ## Desktop app (preview)
 
-Waimea also runs as a desktop app, with no terminal in sight: a modern player that stays sharp at any size, with the spectrum as a living wave, next to a library for your music and radio stations. Classic `.wsz` skins are one click away under Uiterlijk. The code lives in [`desktop/`](desktop/) and uses [Tauri](https://tauri.app). It drives the same player as the terminal version, so the remote-control commands below work on it too. Only one Waimea runs at a time.
+Waimea also runs as a desktop app, with no terminal in sight: a modern player that stays sharp at any size, with the spectrum as a living wave. One button turns the card over to your music, radio stations, playlist and equalizer. Classic `.wsz` skins are one click away under Uiterlijk. The code lives in [`desktop/`](desktop/) and uses [Tauri](https://tauri.app). It drives the same player as the terminal version, so the remote-control commands below work on it too. Only one Waimea runs at a time.
 
 The classic mode ships with Waimea's own deep-sea skin ([drawn by a script](assets/skin/make_skin.py)). YouTube is parked in the desktop app for now.
 
