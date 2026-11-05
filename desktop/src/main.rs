@@ -21,16 +21,11 @@ fn eq(player: State<'_, Desktop>) -> String {
     player.eq()
 }
 
-/// `{url, credit}`, or null when no picture was found.
+/// `{url, credit, logo}`, or null when no picture was found.
 #[tauri::command(async)]
-fn artwork(
-    artist: String,
-    title: String,
-    station: String,
-    stream: String,
-) -> Option<serde_json::Value> {
-    desktop::artwork(&artist, &title, &station, &stream)
-        .map(|art| serde_json::json!({"url": art.url, "credit": art.credit}))
+fn artwork(artist: String, station: String, stream: String) -> Option<serde_json::Value> {
+    desktop::artwork(&artist, &station, &stream)
+        .map(|art| serde_json::json!({"url": art.url, "credit": art.credit, "logo": art.logo}))
 }
 
 #[tauri::command(async)]

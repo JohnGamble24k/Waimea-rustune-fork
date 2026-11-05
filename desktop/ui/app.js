@@ -109,22 +109,21 @@ async function showArtwork({ title, artist }) {
   }
   // Stream titles are usually "Artist - Title".
   let name = artist;
-  let song = title;
   if (!name && isStream && title.includes(' - ')) {
-    [name, song] = title.split(' - ');
+    [name] = title.split(' - ');
   }
   const key = `${name}|${station}`;
   if (key === artKey) return;
   artKey = key;
   if (!artCache.has(key)) {
-    artCache.set(key, await invoke('artwork', { artist: name.trim(), title: (song || '').trim(), station, stream }).catch(() => null));
+    artCache.set(key, await invoke('artwork', { artist: name.trim(), station, stream }).catch(() => null));
   }
   if (key !== artKey) return;
   const art = artCache.get(key);
   $('art').hidden = !art;
   if (art) {
     $('art-image').src = art.url;
-    $('art').classList.toggle('logo', art.credit === 'Radio Browser');
+    $('art').classList.toggle('logo', art.logo);
     setText('art-credit', art.credit);
   }
 }

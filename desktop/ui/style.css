@@ -128,7 +128,16 @@ body[data-mode="modern"] .classic, body[data-mode="classic"] .modern { display: 
 
 #art.logo #art-image { padding: 14%; background: var(--spray); object-fit: contain; }
 
-#art-credit { margin-top: 5px; font-size: 11px; opacity: .55; }
+#art-credit {
+  display: -webkit-box;
+  margin-top: 5px;
+  overflow: hidden;
+  font-size: 11px;
+  line-height: 1.3;
+  opacity: .6;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
 
 #title {
   display: -webkit-box;

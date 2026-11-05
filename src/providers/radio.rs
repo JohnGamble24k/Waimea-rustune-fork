@@ -705,9 +705,10 @@ mod tests {
             request_line(&requests[0]),
             "GET /json/stations/search?limit=50&offset=0&order=votes&hidebroken=true&reverse=true&tag=jazz&tagExact=true HTTP/1.1"
         );
-        assert!(requests[0]
-            .to_ascii_lowercase()
-            .contains(&format!("user-agent: {}", super::super::USER_AGENT)));
+        assert!(requests[0].to_ascii_lowercase().contains(&format!(
+            "user-agent: {}",
+            super::super::USER_AGENT.to_ascii_lowercase()
+        )));
     }
 
     #[test]

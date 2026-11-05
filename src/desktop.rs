@@ -338,41 +338,45 @@ pub fn request(line: &str) -> std::io::Result<String> {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Artwork {
     pub url: String,
-    pub credit: &'static str,
+    pub credit: String,
+    /// A station logo, shown whole on a light background; else a photo.
+    pub logo: bool,
 }
 
 const ARTWORK_MAX_BYTES: u64 = 4 << 20;
+const JSON_MAX_BYTES: u64 = 2 << 20;
+const WIKI_CANDIDATES: usize = 3;
+/// Wikidata occupations that make a person a music act: musician, singer,
+/// singer-songwriter, composer, rapper, pianist, saxophonist, guitarist,
+/// drummer, disc jockey, record producer, jazz musician, instrumentalist.
+const MUSIC_OCCUPATIONS: [&str; 13] = [
+    "Q639669",
+    "Q177220",
+    "Q488205",
+    "Q36834",
+    "Q2252262",
+    "Q486748",
+    "Q12800682",
+    "Q855091",
+    "Q386854",
+    "Q130857",
+    "Q183945",
+    "Q15981151",
+    "Q1278335",
+];
 
-/// The artist's photo, else the album cover, else the station's logo.
-/// ponytail: blocking, uncached and looked up per track; the page caches per
-/// artist. Check Deezer's and Apple's terms before this leaves the test branch.
-pub fn artwork(artist: &str, title: &str, station: &str, stream_url: &str) -> Option<Artwork> {
-    let agent = crate::net::agent();
-    let picture = |url: String, credit| {
-        let bytes = get_bytes(agent, &url, "image/*", ARTWORK_MAX_BYTES).ok()?;
-        data_url(&bytes).map(|url| Artwork { url, credit })
-    };
+/// The artist's freely licensed photo from Wikimedia Commons, else the
+/// station's logo. Photos carry their maker and licence, as the licences ask.
+pub fn artwork(artist: &str, station: &str, stream_url: &str) -> Option<Artwork> {
     if !artist.is_empty() {
-        let query = percent_encode(artist);
-        let url = format!("https://api.deezer.com/search/artist?q={query}&limit=5");
-        let found = get_bytes(agent, &url, "application/json", 1 << 20)
-            .ok()
-            .and_then(|body| deezer_picture(&body, artist));
-        if let Some(art) = found.and_then(|url| picture(url, "Deezer")) {
-            return Some(art);
-        }
-        let term = percent_encode(&format!("{artist} {title}"));
-        let url = format!("https://itunes.apple.com/search?term={term}&entity=song&limit=5");
-        let found = get_bytes(agent, &url, "application/json", 1 << 20)
-            .ok()
-            .and_then(|body| itunes_cover(&body, artist));
-        if let Some(art) = found.and_then(|url| picture(url, "Apple Music")) {
+        if let Some(art) = commons_photo(artist) {
             return Some(art);
         }
     }
     if station.is_empty() {
         return None;
     }
+    let agent = crate::net::agent();
     let client = RadioClient::discover(agent);
     let stations = client.search(agent, &StationQuery::by_name(station)).ok()?;
     let favicon = stations
@@ -385,7 +389,142 @@ pub fn artwork(artist: &str, title: &str, station: &str, stream_url: &str) -> Op
         })?
         .favicon
         .clone()?;
-    picture(favicon, "Radio Browser")
+    let bytes = get_bytes(agent, &favicon, "image/*", ARTWORK_MAX_BYTES).ok()?;
+    Some(Artwork {
+        url: data_url(&bytes)?,
+        credit: "Logo via Radio Browser".into(),
+        logo: true,
+    })
+}
+
+fn commons_photo(artist: &str) -> Option<Artwork> {
+    let agent = crate::net::agent();
+    let wikidata = |query: String| {
+        let url = format!("https://www.wikidata.org/w/api.php?format=json&{query}");
+        get_bytes(agent, &url, "application/json", JSON_MAX_BYTES).ok()
+    };
+    let claims = |id: &str, property: &str| {
+        wikidata(format!(
+            "action=wbgetclaims&entity={id}&property={property}"
+        ))
+        .map(|body| claim_values(&body, property))
+        .unwrap_or_default()
+    };
+    let found = wikidata(format!(
+        "action=wbsearchentities&type=item&language=en&limit=5&search={}",
+        percent_encode(artist)
+    ))?;
+    for id in exact_matches(&found, artist).iter().take(WIKI_CANDIDATES) {
+        let is_music_act = if claims(id, "P31").iter().any(|c| c == "Q5") {
+            // A person: a music id alone is not enough, comedians have one too.
+            claims(id, "P106")
+                .iter()
+                .any(|c| MUSIC_OCCUPATIONS.contains(&c.as_str()))
+        } else {
+            !claims(id, "P434").is_empty()
+        };
+        if !is_music_act {
+            continue;
+        }
+        let file = claims(id, "P18").into_iter().next()?;
+        let url = format!(
+            "https://commons.wikimedia.org/w/api.php?format=json&action=query&prop=imageinfo\
+             &iiprop=url%7Cextmetadata&iiurlwidth=500&titles=File:{}",
+            percent_encode(&file)
+        );
+        let body = get_bytes(agent, &url, "application/json", JSON_MAX_BYTES).ok()?;
+        let (thumb, credit) = commons_picture(&body)?;
+        let bytes = get_bytes(agent, &thumb, "image/*", ARTWORK_MAX_BYTES).ok()?;
+        return Some(Artwork {
+            url: data_url(&bytes)?,
+            credit,
+            logo: false,
+        });
+    }
+    None
+}
+
+/// Wikidata items whose label is exactly `artist`: a wrong face is worse than none.
+fn exact_matches(body: &[u8], artist: &str) -> Vec<String> {
+    let Ok(json) = serde_json::from_slice::<serde_json::Value>(body) else {
+        return Vec::new();
+    };
+    json["search"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter(|hit| {
+            hit["label"]
+                .as_str()
+                .is_some_and(|label| label.eq_ignore_ascii_case(artist))
+        })
+        .filter_map(|hit| hit["id"].as_str().map(String::from))
+        .collect()
+}
+
+/// Values of one property from `wbgetclaims`: item ids or plain strings.
+fn claim_values(body: &[u8], property: &str) -> Vec<String> {
+    let Ok(json) = serde_json::from_slice::<serde_json::Value>(body) else {
+        return Vec::new();
+    };
+    json["claims"][property]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|claim| {
+            let value = &claim["mainsnak"]["datavalue"]["value"];
+            value["id"].as_str().or(value.as_str()).map(String::from)
+        })
+        .collect()
+}
+
+/// Only licences that allow reuse in any app.
+fn license_allowed(name: &str) -> bool {
+    let name = name.to_ascii_lowercase();
+    if name.contains("nc") && name.starts_with("cc by")
+        || name.contains("-nd")
+        || name.contains(" nd")
+    {
+        return false;
+    }
+    name.starts_with("cc by") || name.starts_with("cc0") || name.starts_with("public domain")
+}
+
+/// The thumbnail URL and credit line of a Commons file, if its licence allows it.
+fn commons_picture(body: &[u8]) -> Option<(String, String)> {
+    let json: serde_json::Value = serde_json::from_slice(body).ok()?;
+    let page = json["query"]["pages"].as_object()?.values().next()?;
+    let info = &page["imageinfo"][0];
+    let meta = &info["extmetadata"];
+    if meta["NonFree"]["value"].as_str() == Some("true") {
+        return None;
+    }
+    let license = meta["LicenseShortName"]["value"].as_str()?;
+    if !license_allowed(license) {
+        return None;
+    }
+    let maker = strip_html(meta["Artist"]["value"].as_str().unwrap_or(""));
+    let credit = if maker.is_empty() {
+        format!("Foto: Wikimedia Commons, {license}")
+    } else {
+        format!("Foto: {maker}, {license}, via Wikimedia Commons")
+    };
+    Some((info["thumburl"].as_str()?.to_string(), credit))
+}
+
+/// Commons returns the maker as HTML; the page shows it as plain text.
+fn strip_html(text: &str) -> String {
+    let mut out = String::new();
+    let mut in_tag = false;
+    for c in text.chars() {
+        match c {
+            '<' => in_tag = true,
+            '>' => in_tag = false,
+            c if !in_tag => out.push(c),
+            _ => {}
+        }
+    }
+    out.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
 fn percent_encode(text: &str) -> String {
@@ -399,30 +538,6 @@ fn percent_encode(text: &str) -> String {
         }
     }
     out
-}
-
-/// A wrong face is worse than none: only an exact name match counts.
-fn deezer_picture(body: &[u8], artist: &str) -> Option<String> {
-    let json: serde_json::Value = serde_json::from_slice(body).ok()?;
-    json["data"].as_array()?.iter().find(|a| {
-        a["name"]
-            .as_str()
-            .is_some_and(|n| n.eq_ignore_ascii_case(artist))
-    })?["picture_xl"]
-        .as_str()
-        .filter(|url| !url.is_empty())
-        .map(String::from)
-}
-
-fn itunes_cover(body: &[u8], artist: &str) -> Option<String> {
-    let json: serde_json::Value = serde_json::from_slice(body).ok()?;
-    let cover = json["results"].as_array()?.iter().find(|r| {
-        r["artistName"]
-            .as_str()
-            .is_some_and(|n| n.eq_ignore_ascii_case(artist))
-    })?["artworkUrl100"]
-        .as_str()?;
-    Some(cover.replace("100x100bb", "600x600bb"))
 }
 
 /// Only real images become a data URL, whatever a server claims to send.
@@ -468,20 +583,45 @@ mod tests {
     }
 
     #[test]
-    fn artwork_only_trusts_exact_names_and_real_images() {
-        let deezer = br#"{"data":[{"name":"Brian Simpsons","picture_xl":"https://x/wrong"},
-            {"name":"brian simpson","picture_xl":"https://x/right"}]}"#;
+    fn photos_need_an_exact_name_and_a_free_licence() {
+        let search = br#"{"search":[{"id":"Q1","label":"Brian Simpsons"},{"id":"Q2","label":"brian simpson"}]}"#;
+        assert_eq!(exact_matches(search, "Brian Simpson"), ["Q2"]);
+        let occupation =
+            br#"{"claims":{"P106":[{"mainsnak":{"datavalue":{"value":{"id":"Q245068"}}}}]}}"#;
+        assert_eq!(claim_values(occupation, "P106"), ["Q245068"]);
+        let file = br#"{"claims":{"P18":[{"mainsnak":{"datavalue":{"value":"Band.jpg"}}}]}}"#;
+        assert_eq!(claim_values(file, "P18"), ["Band.jpg"]);
+
+        for free in ["CC BY 2.0", "CC BY-SA 4.0", "CC0", "Public domain"] {
+            assert!(license_allowed(free), "{free}");
+        }
+        for not_free in [
+            "CC BY-NC 2.0",
+            "CC BY-NC-SA 3.0",
+            "CC BY-ND 4.0",
+            "Fair use",
+            "Copyrighted",
+        ] {
+            assert!(!license_allowed(not_free), "{not_free}");
+        }
+
+        let page = |license: &str, extra: &str| {
+            format!(
+                r#"{{"query":{{"pages":{{"1":{{"imageinfo":[{{"thumburl":"https://x/t.jpg","extmetadata":{{
+                "LicenseShortName":{{"value":"{license}"}},
+                "Artist":{{"value":"<a href='//x'>Ann  <b>Lee</b></a>"}}{extra}}}}}]}}}}}}}}"#
+            )
+        };
+        let (thumb, credit) = commons_picture(page("CC BY 3.0", "").as_bytes()).unwrap();
+        assert_eq!(thumb, "https://x/t.jpg");
+        assert_eq!(credit, "Foto: Ann Lee, CC BY 3.0, via Wikimedia Commons");
+        assert_eq!(commons_picture(page("CC BY-NC 2.0", "").as_bytes()), None);
+        let non_free = r#","NonFree":{"value":"true"}"#;
         assert_eq!(
-            deezer_picture(deezer, "Brian Simpson").unwrap(),
-            "https://x/right"
+            commons_picture(page("CC BY 3.0", non_free).as_bytes()),
+            None
         );
-        assert_eq!(deezer_picture(deezer, "Someone Else"), None);
-        let itunes =
-            br#"{"results":[{"artistName":"A","artworkUrl100":"https://x/100x100bb.jpg"}]}"#;
-        assert_eq!(
-            itunes_cover(itunes, "A").unwrap(),
-            "https://x/600x600bb.jpg"
-        );
+
         assert_eq!(percent_encode("AC/DC & co"), "AC%2FDC%20%26%20co");
         assert!(data_url(&[0x89, b'P', b'N', b'G', 1])
             .unwrap()

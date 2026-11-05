@@ -31,7 +31,11 @@ pub use radio::RadioConfig;
 pub use subsonic::SubsonicConfig;
 
 /// `User-Agent` sent by every provider request.
-pub const USER_AGENT: &str = concat!("waimea/", env!("CARGO_PKG_VERSION"));
+pub const USER_AGENT: &str = concat!(
+    "waimea/",
+    env!("CARGO_PKG_VERSION"),
+    " (https://github.com/JohnGamble24k/Waimea)"
+);
 
 /// Failure of a provider call. Messages never contain URLs or credentials.
 #[derive(Debug, Clone, PartialEq, Eq)]
