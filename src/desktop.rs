@@ -392,7 +392,7 @@ pub fn artwork(artist: &str, station: &str, stream_url: &str) -> Option<Artwork>
     let bytes = get_bytes(agent, &favicon, "image/*", ARTWORK_MAX_BYTES).ok()?;
     Some(Artwork {
         url: data_url(&bytes)?,
-        credit: "Logo via Radio Browser".into(),
+        credit: "Radio Browser".into(),
         logo: true,
     })
 }
@@ -504,10 +504,11 @@ fn commons_picture(body: &[u8]) -> Option<(String, String)> {
         return None;
     }
     let maker = strip_html(meta["Artist"]["value"].as_str().unwrap_or(""));
+    // Names only, so the line reads the same in every interface language.
     let credit = if maker.is_empty() {
-        format!("Foto: Wikimedia Commons, {license}")
+        format!("{license}, Wikimedia Commons")
     } else {
-        format!("Foto: {maker}, {license}, via Wikimedia Commons")
+        format!("{maker}, {license}, Wikimedia Commons")
     };
     Some((info["thumburl"].as_str()?.to_string(), credit))
 }
@@ -614,7 +615,7 @@ mod tests {
         };
         let (thumb, credit) = commons_picture(page("CC BY 3.0", "").as_bytes()).unwrap();
         assert_eq!(thumb, "https://x/t.jpg");
-        assert_eq!(credit, "Foto: Ann Lee, CC BY 3.0, via Wikimedia Commons");
+        assert_eq!(credit, "Ann Lee, CC BY 3.0, Wikimedia Commons");
         assert_eq!(commons_picture(page("CC BY-NC 2.0", "").as_bytes()), None);
         let non_free = r#","NonFree":{"value":"true"}"#;
         assert_eq!(

@@ -61,7 +61,7 @@ function showFace(toBack) {
   document.querySelector('.stage').inert = toBack;
   const toggle = $('library-toggle');
   toggle.setAttribute('aria-expanded', String(toBack));
-  toggle.setAttribute('aria-label', toBack ? 'Terug naar de speler' : 'Bibliotheek tonen');
+  toggle.setAttribute('aria-label', toBack ? T.backToPlayer : T.showLibrary);
   $('toggle-icon').setAttribute('d', toBack ? 'M6 6l12 12M18 6L6 18' : 'M4 6h16M4 12h16M4 18h10');
   syncEqButton();
 }
@@ -155,13 +155,13 @@ function showStatus() {
     if (title) showArtwork({ title, artist });
     else { artKey = ''; $('art').hidden = true; }
   }
-  setText('title', title || 'Kies muziek of een radiostation');
+  setText('title', title || T.choose);
   setText('artist', artist);
   setText('error', status.last_error || '');
   const pageTitle = title ? `${title} - Waimea` : 'Waimea';
   if (document.title !== pageTitle) document.title = pageTitle;
   setAttr('play-icon', 'd', playing ? PAUSE : PLAY);
-  setAttr('play', 'aria-label', playing ? 'Pauzeren' : 'Afspelen');
+  setAttr('play', 'aria-label', playing ? T.pause : T.play);
   setAttr('shuffle', 'aria-pressed', String(!!status.shuffle));
   const repeat = status.repeat && status.repeat !== 'off';
   setAttr('repeat', 'aria-pressed', String(!!repeat));
@@ -357,7 +357,7 @@ function slider(label, value, onInput, extra = '') {
   rail.className = 'rail';
   rail.tabIndex = 0;
   rail.setAttribute('role', 'slider');
-  rail.setAttribute('aria-label', label === 'Pre' ? 'Voorversterking' : `${label} Hz`);
+  rail.setAttribute('aria-label', label === 'Pre' ? T.preamp : `${label} Hz`);
   rail.setAttribute('aria-valuemin', '-12');
   rail.setAttribute('aria-valuemax', '12');
   const fill = document.createElement('span');
@@ -410,7 +410,7 @@ async function showEq() {
   $('eq-on').checked = eq.enabled;
   const select = $('eq-preset');
   if (!select.options.length) {
-    select.append(new Option('Voorinstelling', ''), ...presets.map((name) => new Option(name, name)));
+    select.append(new Option(T.preset, ''), ...presets.map((name) => new Option(name, name)));
   }
   select.value = '';
   $('eq-bands').replaceChildren(
@@ -542,8 +542,8 @@ const message = $('message');
 const form = $('search');
 
 const SOURCES = {
-  local: { placeholder: 'Zoek in je muziek', live: true, empty: 'Geen muziek gevonden. Voeg bestanden of een map toe.' },
-  radio: { placeholder: 'Zoek een radiostation', start: 'jazz', chips: ['Jazz', 'Hawaii', 'Lofi', 'Klassiek', 'Nieuws', 'NPO'], empty: 'Geen stations gevonden. Probeer een andere zoekterm.' },
+  local: { placeholder: T.searchMusic, live: true, empty: T.noMusic },
+  radio: { placeholder: T.searchRadio, start: T.chips[0], chips: T.chips, empty: T.noStations },
 };
 
 let source = 'local';
@@ -585,7 +585,7 @@ const details = (hit) => [hit.artist, hit.album].filter(Boolean).join(' - ') || 
 async function search(text) {
   const id = ++searchId;
   const from = source;
-  say('Zoeken...');
+  say(T.searching);
   try {
     const limit = from === 'local' ? 500 : 30;
     const reply = await ask({ search: { source: from, query: text, limit, then: 'show' } });
@@ -601,7 +601,7 @@ async function search(text) {
 }
 
 async function play(hit, text, from, limit) {
-  say(`${hit.title} starten...`);
+  say(T.starting(hit.title));
   try {
     // ponytail: repeats the search, as `search --play N` does; results that
     // changed in between start another row. Queue by id if that ever bites.
@@ -619,23 +619,23 @@ async function showQueue() {
     { title: item.title, detail: item.artist, time: item.duration, current: item.current },
     () => { command('play_index', item.index - 1); flip(false); },
   )));
-  say(items.length ? '' : 'De afspeellijst is leeg. Kies iets bij Muziek of Radio.');
+  say(items.length ? '' : T.queueEmpty);
 }
 
 async function showLooks() {
   say('');
   const names = await invoke('skins');
   results.replaceChildren(
-    row({ title: 'Waimea', detail: 'Moderne speler', current: document.body.dataset.mode === 'modern' }, () => {
+    row({ title: 'Waimea', detail: T.modernPlayer, current: document.body.dataset.mode === 'modern' }, () => {
       setMode('modern');
       showLooks();
       flip(false);
     }),
-    ...names.map((name) => row({ title: name, detail: 'Klassieke skin' }, async () => {
+    ...names.map((name) => row({ title: name, detail: T.classicSkin }, async () => {
       try {
         await ask({ skin: name });
         setMode('classic');
-        say(`Skin ${name} gekozen.`);
+        say(T.skinChosen(name));
         showLooks();
         flip(false);
       } catch (e) {
@@ -674,8 +674,8 @@ function show(next) {
 
 async function addMusic(folder) {
   try {
-    const count = await invoke('add_music', { folder });
-    if (count) say('Toegevoegd aan de afspeellijst.');
+    const count = await invoke('add_music', { folder, title: T.addMusicTitle });
+    if (count) say(T.added);
   } catch (e) {
     say(String(e), true);
   }

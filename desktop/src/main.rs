@@ -49,8 +49,8 @@ fn skins() -> Vec<String> {
 
 /// Native picker; the chosen files or folder join the queue. Returns the count.
 #[tauri::command(async)]
-fn add_music(app: AppHandle, folder: bool) -> Result<usize, String> {
-    let dialog = app.dialog().file().set_title("Muziek toevoegen");
+fn add_music(app: AppHandle, folder: bool, title: String) -> Result<usize, String> {
+    let dialog = app.dialog().file().set_title(title);
     let picked = if folder {
         dialog.blocking_pick_folder().map(|f| vec![f])
     } else {
@@ -91,7 +91,7 @@ fn main() {
                 Err(e) => {
                     let handle = app.handle().clone();
                     app.dialog()
-                        .message(format!("Waimea kan niet starten.\n\n{e:#}"))
+                        .message(format!("Waimea could not start.\n\n{e:#}"))
                         .title("Waimea")
                         .show(move |_| handle.exit(1));
                 }

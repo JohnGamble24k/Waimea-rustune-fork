@@ -2,7 +2,9 @@
 Type=Application
 Name=Waimea
 GenericName=Music Player
+GenericName[nl]=Muziekspeler
 Comment=Music and internet radio with classic skins
+Comment[nl]=Muziek en internetradio met klassieke skins
 Exec=waimea
 Icon=${SNAP}/meta/gui/waimea.svg
 Terminal=false
