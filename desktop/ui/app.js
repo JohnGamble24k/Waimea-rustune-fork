@@ -347,18 +347,57 @@ new ResizeObserver(() => {
 const BANDS = ['60', '170', '310', '600', '1k', '3k', '6k', '12k', '14k', '16k'];
 
 function slider(label, value, onInput, extra = '') {
-  const band = document.createElement('label');
+  const band = document.createElement('div');
   band.className = `band ${extra}`;
-  const input = document.createElement('input');
-  input.type = 'range';
-  input.min = -12;
-  input.max = 12;
-  input.step = 0.5;
-  input.value = value;
-  setFill(input);
-  input.setAttribute('aria-label', `${label} Hz`);
-  input.addEventListener('input', () => { setFill(input); onInput(Number(input.value)); });
-  band.append(input, label);
+  const rail = document.createElement('div');
+  rail.className = 'rail';
+  rail.tabIndex = 0;
+  rail.setAttribute('role', 'slider');
+  rail.setAttribute('aria-label', label === 'Pre' ? 'Voorversterking' : `${label} Hz`);
+  rail.setAttribute('aria-valuemin', '-12');
+  rail.setAttribute('aria-valuemax', '12');
+  const fill = document.createElement('span');
+  fill.className = 'fill';
+  const thumb = document.createElement('span');
+  thumb.className = 'thumb';
+  rail.append(fill, thumb);
+  let db = value;
+  const show = () => {
+    rail.style.setProperty('--frac', String((db + 12) / 24));
+    rail.setAttribute('aria-valuenow', String(db));
+  };
+  const change = (next) => {
+    const stepped = Math.max(-12, Math.min(12, Math.round(next * 2) / 2));
+    if (stepped === db) return;
+    db = stepped;
+    show();
+    onInput(db);
+  };
+  const fromPointer = (event) => {
+    const box = rail.getBoundingClientRect();
+    change(((box.bottom - event.clientY) / box.height) * 24 - 12);
+  };
+  rail.addEventListener('pointerdown', (event) => {
+    rail.setPointerCapture(event.pointerId);
+    rail.dataset.dragging = 'true';
+    fromPointer(event);
+  });
+  rail.addEventListener('pointermove', (event) => { if (rail.dataset.dragging) fromPointer(event); });
+  const stop = () => { delete rail.dataset.dragging; };
+  rail.addEventListener('pointerup', stop);
+  rail.addEventListener('pointercancel', stop);
+  rail.addEventListener('keydown', (event) => {
+    const steps = { ArrowUp: 0.5, ArrowDown: -0.5, PageUp: 3, PageDown: -3 };
+    if (event.key in steps) {
+      event.preventDefault();
+      change(db + steps[event.key]);
+    } else if (event.key === 'Home') {
+      event.preventDefault();
+      change(0);
+    }
+  });
+  show();
+  band.append(rail, label);
   return band;
 }
 
