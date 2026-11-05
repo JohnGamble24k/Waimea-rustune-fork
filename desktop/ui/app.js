@@ -66,6 +66,49 @@ function readLibrary() {
   try { return localStorage.getItem('waimea-library') !== 'closed'; } catch { return true; }
 }
 
+// The border between player and library can be dragged, or moved with the arrow keys.
+const handle = $('library-handle');
+const LIBRARY_MIN = 260;
+const STAGE_MIN = 340;
+
+function setLibraryWidth(width, save = true) {
+  const max = Math.max(LIBRARY_MIN, innerWidth - STAGE_MIN);
+  const clamped = Math.round(Math.max(LIBRARY_MIN, Math.min(max, width)));
+  document.documentElement.style.setProperty('--library', `${clamped}px`);
+  handle.setAttribute('aria-valuenow', String(clamped));
+  if (save) {
+    try { localStorage.setItem('waimea-library-width', String(clamped)); } catch { /* lasts this session */ }
+  }
+}
+
+function savedLibraryWidth() {
+  try { return Number(localStorage.getItem('waimea-library-width')) || null; } catch { return null; }
+}
+
+handle.addEventListener('pointerdown', (event) => {
+  event.preventDefault();
+  handle.setPointerCapture(event.pointerId);
+  document.body.classList.add('resizing');
+});
+handle.addEventListener('pointermove', (event) => {
+  if (document.body.classList.contains('resizing')) setLibraryWidth(innerWidth - event.clientX);
+});
+function endResize() { document.body.classList.remove('resizing'); }
+handle.addEventListener('pointerup', endResize);
+handle.addEventListener('pointercancel', endResize);
+handle.addEventListener('keydown', (event) => {
+  const step = event.key === 'ArrowLeft' ? 24 : event.key === 'ArrowRight' ? -24 : 0;
+  if (!step) return;
+  event.preventDefault();
+  setLibraryWidth($('library').getBoundingClientRect().width + step);
+});
+
+// A smaller window must not squeeze the player below its minimum.
+addEventListener('resize', () => {
+  const saved = savedLibraryWidth();
+  if (saved) setLibraryWidth(saved, false);
+});
+
 // ---- Status: what plays, polled once a second.
 
 let status = { status: 'stopped' };
@@ -581,6 +624,7 @@ query.addEventListener('input', () => {
   typing = setTimeout(() => search(query.value.trim()), 150);
 });
 
+if (savedLibraryWidth()) setLibraryWidth(savedLibraryWidth(), false);
 setLibrary(readLibrary());
 setMode(readMode());
 show('local');

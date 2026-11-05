@@ -258,6 +258,37 @@ select { padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; ba
 
 body.library-closed .stage { margin-right: 0; }
 
+body.resizing { cursor: col-resize; }
+
+body.resizing .stage, body.resizing .library { transition: none; }
+
+#library-handle {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  bottom: 0;
+  left: -5px;
+  width: 10px;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+#library-handle::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 4px;
+  width: 2px;
+  background: var(--foam);
+  opacity: 0;
+  transition: opacity .12s;
+}
+
+#library-handle:hover::after, body.resizing #library-handle::after, #library-handle:focus-visible::after { opacity: 1; }
+
+#library-handle:focus-visible { outline: none; }
+
 .library {
   position: absolute;
   z-index: 3;
