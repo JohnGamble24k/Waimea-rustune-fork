@@ -704,7 +704,7 @@ fn render_bitmap_marquee(frame: &mut Frame, area: Rect, app: &App, sc: &SC) {
         None => match &app.status {
             Status::Loading(t) | Status::Searching(t) | Status::Scanning(t) => t.clone(),
             Status::Error(t) => t.clone(),
-            _ => "  ***  rustune  ***  ".into(),
+            _ => "  ***  waimea  ***  ".into(),
         },
     };
 

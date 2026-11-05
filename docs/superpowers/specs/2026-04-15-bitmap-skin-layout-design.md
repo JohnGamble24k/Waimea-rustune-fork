@@ -6,7 +6,7 @@ Redesign the Winamp renderer to use actual BMP pixel data from `.wsz` skin files
 
 ## Context
 
-Rustune currently extracts **palette colors** from Winamp skin BMPs and uses them to style text/unicode elements. The `skin_bitmap.rs` module can render BMP pixels as terminal graphics using upper-half block characters, but it's only used for the MAIN.BMP background. The goal is to make the layout itself driven by the skin's bitmap resources — so each skin looks visually distinct, not just color-swapped.
+Waimea currently extracts **palette colors** from Winamp skin BMPs and uses them to style text/unicode elements. The `skin_bitmap.rs` module can render BMP pixels as terminal graphics using upper-half block characters, but it's only used for the MAIN.BMP background. The goal is to make the layout itself driven by the skin's bitmap resources — so each skin looks visually distinct, not just color-swapped.
 
 ## Decision: Layered Bitmap Renderer
 

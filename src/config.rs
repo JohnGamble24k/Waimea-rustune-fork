@@ -32,6 +32,9 @@ pub struct Config {
     /// Playing on macOS).
     #[serde(default = "default_true")]
     pub media_controls: bool,
+    /// Play the slide-guitar chords when the TUI starts.
+    #[serde(default = "default_true")]
+    pub startup_sound: bool,
     /// Radio, podcasts, lyrics, Subsonic and Jellyfin (`[providers.*]`).
     #[serde(default)]
     pub providers: ProvidersConfig,
@@ -74,12 +77,12 @@ fn default_true() -> bool {
     true
 }
 
-/// `<config dir>/rustune` (e.g. `~/.config/rustune` on Linux).
+/// `<config dir>/waimea` (e.g. `~/.config/waimea` on Linux).
 pub fn config_dir() -> PathBuf {
     dirs::config_dir()
         .or_else(|| dirs::home_dir().map(|h| h.join(".config")))
         .unwrap_or_else(|| PathBuf::from(".config"))
-        .join("rustune")
+        .join("waimea")
 }
 
 pub fn skins_dir() -> PathBuf {
@@ -94,10 +97,10 @@ pub fn state_path() -> PathBuf {
     config_dir().join("state.toml")
 }
 
-/// `<cache dir>/rustune`, falling back to the config dir.
+/// `<cache dir>/waimea`, falling back to the config dir.
 pub fn cache_dir() -> PathBuf {
     dirs::cache_dir()
-        .map(|d| d.join("rustune"))
+        .map(|d| d.join("waimea"))
         .unwrap_or_else(|| config_dir().join("cache"))
 }
 
@@ -172,6 +175,7 @@ impl Default for Config {
             replaygain: ReplayGainMode::Off,
             graphics: default_graphics(),
             media_controls: true,
+            startup_sound: true,
             providers: ProvidersConfig::default(),
         }
     }

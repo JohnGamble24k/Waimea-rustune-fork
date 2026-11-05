@@ -1,5 +1,5 @@
 {
-  description = "rustune: a terminal music player with online search, radio, podcasts and Winamp skins";
+  description = "waimea: a terminal music player with online search, radio, podcasts and Winamp skins";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
@@ -17,9 +17,9 @@
     in
     {
       packages = forAllSystems (pkgs: {
-        default = self.packages.${pkgs.stdenv.hostPlatform.system}.rustune;
-        rustune = pkgs.rustPlatform.buildRustPackage {
-          pname = "rustune";
+        default = self.packages.${pkgs.stdenv.hostPlatform.system}.waimea;
+        waimea = pkgs.rustPlatform.buildRustPackage {
+          pname = "waimea";
           inherit (cargoToml.package) version;
 
           src = pkgs.lib.fileset.toSource {
@@ -30,6 +30,7 @@
               ./README.md
               ./LICENSE
               ./src
+              ./desktop
             ];
           };
           cargoLock.lockFile = ./Cargo.lock;
@@ -46,7 +47,7 @@
             description = cargoToml.package.description;
             homepage = cargoToml.package.homepage;
             license = pkgs.lib.licenses.mit;
-            mainProgram = "rustune";
+            mainProgram = "waimea";
             platforms = systems;
           };
         };

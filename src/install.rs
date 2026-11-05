@@ -137,7 +137,7 @@ pub fn run_install(dep: Dep) -> bool {
             false
         }
     };
-    println!("\nPress Enter to return to rustune...");
+    println!("\nPress Enter to return to waimea...");
     let mut buf = String::new();
     let _ = std::io::stdin().read_line(&mut buf);
     success
@@ -159,6 +159,6 @@ mod tests {
 
     #[test]
     fn missing_program_is_not_on_path() {
-        assert!(!on_path("rustune-definitely-not-a-real-binary"));
+        assert!(!on_path("waimea-definitely-not-a-real-binary"));
     }
 }

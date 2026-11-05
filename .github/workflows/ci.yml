@@ -60,7 +60,7 @@ jobs:
       - name: Report binary size and dependency count
         shell: bash
         run: |
-          bytes=$(wc -c < target/release/rustune | tr -d ' ')
+          bytes=$(wc -c < target/release/waimea | tr -d ' ')
           deps=$(cargo tree --edges normal --prefix none | sort -u | wc -l | tr -d ' ')
           {
             echo "### ${{ runner.os }} release binary"
@@ -117,7 +117,7 @@ jobs:
       - name: Decoder path throughput and resampler quality
         shell: bash
         env:
-          RUSTUNE_BENCH_MP3: ${{ runner.temp }}/bench.mp3
+          WAIMEA_BENCH_MP3: ${{ runner.temp }}/bench.mp3
         run: |
           set -o pipefail
           cargo test --release --locked -- --ignored --nocapture --test-threads=1 bench_ | tee bench.txt
@@ -145,14 +145,14 @@ jobs:
       - name: --help
         shell: bash
         run: |
-          out=$(target/release/rustune --help)
+          out=$(target/release/waimea --help)
           echo "$out"
           grep -q USAGE <<<"$out"
       - name: doctor
         shell: bash
         run: |
           tmp=$(mktemp -d)
-          HOME="$tmp" XDG_CONFIG_HOME="$tmp/.config" target/release/rustune doctor
+          HOME="$tmp" XDG_CONFIG_HOME="$tmp/.config" target/release/waimea doctor
       - name: Play a WAV in a pseudo-terminal
         shell: bash
         run: |
@@ -176,8 +176,8 @@ jobs:
           home = os.path.join(tmp, "home")
           xdg = os.path.join(home, ".config")
           config = 'onboarding_done = true\nmusic_dir = "%s"\n' % tmp
-          for d in (os.path.join(xdg, "rustune"),
-                    os.path.join(home, "Library", "Application Support", "rustune")):
+          for d in (os.path.join(xdg, "waimea"),
+                    os.path.join(home, "Library", "Application Support", "waimea")):
               os.makedirs(d, exist_ok=True)
               with open(os.path.join(d, "config.toml"), "w") as f:
                   f.write(config)
@@ -185,7 +185,7 @@ jobs:
           env = dict(os.environ, TERM="xterm-256color", HOME=home, XDG_CONFIG_HOME=xdg)
           master, slave = os.openpty()
           fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 40, 120, 0, 0))
-          proc = subprocess.Popen(["target/release/rustune", wav], stdin=slave,
+          proc = subprocess.Popen(["target/release/waimea", wav], stdin=slave,
                                   stdout=slave, stderr=slave, env=env, start_new_session=True)
           os.close(slave)
 
@@ -241,12 +241,12 @@ jobs:
               w.writeframes(b"\0\0\0\0" * rate * 30)
           home = os.path.join(tmp, "home")
           xdg = os.path.join(home, ".config")
-          os.makedirs(os.path.join(xdg, "rustune"))
-          with open(os.path.join(xdg, "rustune", "config.toml"), "w") as f:
+          os.makedirs(os.path.join(xdg, "waimea"))
+          with open(os.path.join(xdg, "waimea", "config.toml"), "w") as f:
               f.write('onboarding_done = true\nmusic_dir = "%s"\n' % tmp)
           env = dict(os.environ, TERM="xterm-256color", HOME=home, XDG_CONFIG_HOME=xdg)
 
-          DEST = "org.mpris.MediaPlayer2.rustune"
+          DEST = "org.mpris.MediaPlayer2.waimea"
           PATH = "/org/mpris/MediaPlayer2"
           PLAYER = "org.mpris.MediaPlayer2.Player"
           def send(*args):
@@ -267,7 +267,7 @@ jobs:
 
           master, slave = os.openpty()
           fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 40, 120, 0, 0))
-          proc = subprocess.Popen(["target/release/rustune", wav], stdin=slave,
+          proc = subprocess.Popen(["target/release/waimea", wav], stdin=slave,
                                   stdout=slave, stderr=slave, env=env, start_new_session=True)
           os.close(slave)
           out = bytearray()
@@ -294,7 +294,7 @@ jobs:
               return "boolean true" in r.stdout
           wait_for(owned, DEST + " on the bus")
 
-          if 'string "rustune"' not in get("org.mpris.MediaPlayer2", "Identity"):
+          if 'string "waimea"' not in get("org.mpris.MediaPlayer2", "Identity"):
               fail("Identity")
           wait_for(lambda: '"tone"' in get(PLAYER, "Metadata"), "Metadata with the track title")
           if "mpris:trackid" not in get(PLAYER, "Metadata"):
@@ -334,7 +334,7 @@ jobs:
 
           # --daemon serves MPRIS too.
           log = open(os.path.join(tmp, "daemon.log"), "w+")
-          proc = subprocess.Popen(["target/release/rustune", "--daemon", wav], stdin=subprocess.DEVNULL,
+          proc = subprocess.Popen(["target/release/waimea", "--daemon", wav], stdin=subprocess.DEVNULL,
                                   stdout=log, stderr=log, env=env)
           def fail(msg):
               print("MPRIS daemon test failed:", msg)
@@ -345,7 +345,7 @@ jobs:
                   proc.kill()
               sys.exit(1)
           wait_for(owned, DEST + " from the daemon")
-          if 'string "rustune"' not in get("org.mpris.MediaPlayer2", "Identity"):
+          if 'string "waimea"' not in get("org.mpris.MediaPlayer2", "Identity"):
               fail("daemon Identity")
           wait_for(lambda: '"tone"' in get(PLAYER, "Metadata"), "daemon Metadata with the track title")
           send("org.freedesktop.DBus.Properties.Set", "string:" + PLAYER, "string:Volume", "variant:double:0.5")
@@ -370,7 +370,7 @@ jobs:
           python3 - <<'EOF'
           import json, math, os, re, signal, struct, subprocess, sys, tempfile, threading, time, wave
 
-          BIN = os.path.abspath("target/release/rustune")
+          BIN = os.path.abspath("target/release/waimea")
           tmp = tempfile.mkdtemp()
 
           def make_wav(name, secs):
@@ -392,17 +392,17 @@ jobs:
           home = os.path.join(tmp, "home")
           xdg = os.path.join(home, ".config")
           config = 'onboarding_done = true\nmusic_dir = "%s"\n' % tmp
-          conf_dirs = [os.path.join(xdg, "rustune"),
-                       os.path.join(home, "Library", "Application Support", "rustune")]
+          conf_dirs = [os.path.join(xdg, "waimea"),
+                       os.path.join(home, "Library", "Application Support", "waimea")]
           for d in conf_dirs:
               os.makedirs(d, exist_ok=True)
               with open(os.path.join(d, "config.toml"), "w") as f:
                   f.write(config)
           # Short runtime dir: macOS temp paths can exceed the socket path limit.
           runtime = tempfile.mkdtemp(dir="/tmp")
-          sock = os.path.join(runtime, "rustune.sock")
+          sock = os.path.join(runtime, "waimea.sock")
           env = dict(os.environ, HOME=home, XDG_CONFIG_HOME=xdg, XDG_RUNTIME_DIR=runtime)
-          env.pop("RUSTUNE_SOCKET", None)
+          env.pop("WAIMEA_SOCKET", None)
 
           log = open(os.path.join(tmp, "daemon.log"), "w+")
           daemon = subprocess.Popen([BIN, "--daemon", wav1], stdin=subprocess.DEVNULL,
@@ -422,7 +422,7 @@ jobs:
               p = subprocess.run([BIN, *args], env=env, capture_output=True, text=True,
                                  timeout=timeout, stdin=subprocess.DEVNULL)
               if ok and p.returncode != 0:
-                  fail("rustune %s exited %d: %s%s" % (" ".join(args), p.returncode, p.stdout, p.stderr))
+                  fail("waimea %s exited %d: %s%s" % (" ".join(args), p.returncode, p.stdout, p.stderr))
               return p
 
           def status():
@@ -486,7 +486,7 @@ jobs:
           if bad.returncode != 2 or "bad volume" not in bad.stderr:
               fail("bad volume accepted: %d %r" % (bad.returncode, bad.stderr))
 
-          # A second `rustune FILE` hands the file to the running daemon.
+          # A second `waimea FILE` hands the file to the running daemon.
           handoff = rt(wav2)
           if "queued" not in handoff.stdout:
               fail("no hand-off message: %r" % handoff.stdout)
@@ -631,7 +631,7 @@ jobs:
           import json, math, os, struct, subprocess, sys, tempfile, threading, time, wave
           import fcntl, termios
 
-          BIN = os.path.abspath("target/release/rustune")
+          BIN = os.path.abspath("target/release/waimea")
           tmp = tempfile.mkdtemp()
           wavs = []
           for n in (1, 2, 3):
@@ -645,15 +645,15 @@ jobs:
           home = os.path.join(tmp, "home")
           xdg = os.path.join(home, ".config")
           config = 'onboarding_done = true\nmusic_dir = "%s"\n' % tmp
-          for d in (os.path.join(xdg, "rustune"),
-                    os.path.join(home, "Library", "Application Support", "rustune")):
+          for d in (os.path.join(xdg, "waimea"),
+                    os.path.join(home, "Library", "Application Support", "waimea")):
               os.makedirs(d, exist_ok=True)
               with open(os.path.join(d, "config.toml"), "w") as f:
                   f.write(config)
           runtime = tempfile.mkdtemp(dir="/tmp")
           env = dict(os.environ, TERM="xterm-256color", HOME=home, XDG_CONFIG_HOME=xdg,
                      XDG_RUNTIME_DIR=runtime)
-          env.pop("RUSTUNE_SOCKET", None)
+          env.pop("WAIMEA_SOCKET", None)
 
           master, slave = os.openpty()
           fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 40, 120, 0, 0))
@@ -683,7 +683,7 @@ jobs:
               p = subprocess.run([BIN, *args], env=env, capture_output=True, text=True,
                                  timeout=15, stdin=subprocess.DEVNULL)
               if ok and p.returncode != 0:
-                  fail("rustune %s exited %d: %s%s" % (" ".join(args), p.returncode, p.stdout, p.stderr))
+                  fail("waimea %s exited %d: %s%s" % (" ".join(args), p.returncode, p.stdout, p.stderr))
               return p
 
           def status():
@@ -695,7 +695,7 @@ jobs:
               last = None
               while time.time() < deadline:
                   if proc.poll() is not None:
-                      fail("rustune exited early with %d" % proc.returncode)
+                      fail("waimea exited early with %d" % proc.returncode)
                   try:
                       last = pred()
                   except Exception as e:
@@ -785,7 +785,7 @@ jobs:
           curl -fsSL --retry 3 -o base-2.91.wsz \
             https://r2.webampskins.org/skins/5e4f10275dcb1fb211d4a8b4f1bda236.wsz
       - name: Capture the Winamp and Dark themes in a pseudo-terminal
-        run: python .github/scripts/screenshots.py target/release/rustune base-2.91.wsz screenshots
+        run: python .github/scripts/screenshots.py target/release/waimea base-2.91.wsz screenshots
       - uses: actions/upload-artifact@v4
         if: always()
         with:

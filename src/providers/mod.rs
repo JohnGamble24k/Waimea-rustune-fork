@@ -31,7 +31,7 @@ pub use radio::RadioConfig;
 pub use subsonic::SubsonicConfig;
 
 /// `User-Agent` sent by every provider request.
-pub const USER_AGENT: &str = concat!("rustune/", env!("CARGO_PKG_VERSION"));
+pub const USER_AGENT: &str = concat!("waimea/", env!("CARGO_PKG_VERSION"));
 
 /// Failure of a provider call. Messages never contain URLs or credentials.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -169,7 +169,7 @@ pub(crate) fn read_ok(result: HttpResult, limit: u64) -> Result<Vec<u8>> {
     Ok(resp.body_mut().with_config().limit(limit).read_to_vec()?)
 }
 
-/// GET `url` with the rustune User-Agent and the given `Accept` header.
+/// GET `url` with the waimea User-Agent and the given `Accept` header.
 pub(crate) fn get_bytes(
     agent: &ureq::Agent,
     url: &str,

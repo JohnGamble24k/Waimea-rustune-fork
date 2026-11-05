@@ -1,8 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <rect width="64" height="64" rx="14" fill="#0a0a0a"/>
-  <rect x="2" y="2" width="60" height="60" rx="12" stroke="#00ff88" stroke-width="1.5" opacity="0.3"/>
-  <path d="M22 18 L22 46 L44 32 Z" fill="#00ff88" opacity="0.9"/>
-  <circle cx="48" cy="18" r="3" fill="#00ccff" opacity="0.7"/>
-  <path d="M12 52 L52 52" stroke="#00ff88" stroke-width="2" opacity="0.2"/>
-  <path d="M12 52 L28 52" stroke="#00ff88" stroke-width="2" opacity="0.8"/>
+  <defs>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b2545"/>
+      <stop offset="1" stop-color="#0a4f70"/>
+    </linearGradient>
+    <linearGradient id="wave" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7ff5e3"/>
+      <stop offset="1" stop-color="#12a4c4"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#sea)"/>
+  <path d="M0 50 C8 48 14 42 19 33 C25 21 34 12 45 12 C54 12 60 19 59 27 C58 34 50 37 45 33 C41 30 42 24 47 24 C43 21 37 24 34 31 C30 41 36 50 64 48 V50 A14 14 0 0 1 50 64 H14 A14 14 0 0 1 0 50 Z" fill="url(#wave)"/>
+  <path d="M0 54 C8 50 12 58 20 54 S32 50 40 54 S54 58 64 53" stroke="#0b2545" stroke-width="2.5" stroke-linecap="round" opacity="0.55"/>
 </svg>

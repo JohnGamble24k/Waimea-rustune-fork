@@ -234,6 +234,10 @@ impl WinampUiState {
         &self.marquee
     }
 
+    pub fn canvas_mut(&mut self, window: Window) -> &mut Canvas {
+        &mut self.frames[window.index()]
+    }
+
     pub fn canvas(&self, window: Window) -> &Canvas {
         &self.frames[window.index()]
     }

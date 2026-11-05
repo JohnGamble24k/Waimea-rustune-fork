@@ -280,7 +280,7 @@ mod tests {
     impl TempDir {
         fn new(tag: &str) -> Self {
             let p = std::env::temp_dir().join(format!(
-                "rustune-lib-{tag}-{}-{:?}",
+                "waimea-lib-{tag}-{}-{:?}",
                 std::process::id(),
                 std::thread::current().id()
             ));

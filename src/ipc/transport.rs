@@ -4,10 +4,10 @@
 use std::io;
 use std::path::PathBuf;
 
-/// The default endpoint. `RUSTUNE_SOCKET` overrides it (tests, several
+/// The default endpoint. `WAIMEA_SOCKET` overrides it (tests, several
 /// instances).
 pub fn endpoint() -> PathBuf {
-    if let Some(path) = std::env::var_os("RUSTUNE_SOCKET").filter(|p| !p.is_empty()) {
+    if let Some(path) = std::env::var_os("WAIMEA_SOCKET").filter(|p| !p.is_empty()) {
         return PathBuf::from(path);
     }
     default_endpoint()
@@ -16,7 +16,7 @@ pub fn endpoint() -> PathBuf {
 fn already_running() -> io::Error {
     io::Error::new(
         io::ErrorKind::AddrInUse,
-        "another rustune instance is running",
+        "another waimea instance is running",
     )
 }
 
@@ -35,13 +35,13 @@ mod unix {
 
     pub type Conn = UnixStream;
 
-    /// `$XDG_RUNTIME_DIR/rustune.sock`, else the config directory.
+    /// `$XDG_RUNTIME_DIR/waimea.sock`, else the config directory.
     pub fn default_endpoint() -> PathBuf {
         std::env::var_os("XDG_RUNTIME_DIR")
             .filter(|d| !d.is_empty())
             .map(PathBuf::from)
             .unwrap_or_else(crate::config::config_dir)
-            .join("rustune.sock")
+            .join("waimea.sock")
     }
 
     pub struct Listener {
@@ -144,7 +144,7 @@ mod windows {
     pub type Conn = File;
 
     pub fn default_endpoint() -> PathBuf {
-        PathBuf::from(r"\\.\pipe\rustune")
+        PathBuf::from(r"\\.\pipe\waimea")
     }
 
     pub struct Listener {

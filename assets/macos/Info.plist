@@ -5,13 +5,13 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>en</string>
     <key>CFBundleExecutable</key>
-    <string>rustune-launcher</string>
+    <string>waimea-launcher</string>
     <key>CFBundleIdentifier</key>
-    <string>com.dzulfikar08.rustune</string>
+    <string>com.waimea.player</string>
     <key>CFBundleName</key>
-    <string>rustune</string>
+    <string>waimea</string>
     <key>CFBundleDisplayName</key>
-    <string>rustune</string>
+    <string>waimea</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>

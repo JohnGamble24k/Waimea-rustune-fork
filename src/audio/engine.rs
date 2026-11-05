@@ -165,7 +165,7 @@ pub fn spawn(
     let (ready_tx, ready_rx) = mpsc::sync_channel(1);
     let sh = shared.clone();
     let thread = thread::Builder::new()
-        .name("rustune-audio".into())
+        .name("waimea-audio".into())
         .spawn(move || {
             let _ = sh.controller.set(thread::current());
             match backend.open(&sh, None) {
@@ -599,7 +599,7 @@ mod tests {
 
     fn wav_file(name: &str, rate: u32, channels: u16, secs: f32) -> PathBuf {
         let path =
-            std::env::temp_dir().join(format!("rustune-audio-{}-{name}.wav", std::process::id()));
+            std::env::temp_dir().join(format!("waimea-audio-{}-{name}.wav", std::process::id()));
         let frames = (rate as f32 * secs) as usize;
         std::fs::write(&path, wav_bytes(rate, channels, frames, 440.0)).expect("write wav");
         path
@@ -660,7 +660,7 @@ mod tests {
     fn missing_file_reports_error_without_ended() {
         let h = harness(false);
         h.engine
-            .play(Source::File("/nonexistent/rustune.flac".into()), 3);
+            .play(Source::File("/nonexistent/waimea.flac".into()), 3);
         let (ev, _) = h.next();
         assert!(matches!(ev, EngineEvent::Error { token: 3, .. }), "{ev:?}");
         h.wait_status(PlayStatus::Stopped);

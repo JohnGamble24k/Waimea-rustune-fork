@@ -25,10 +25,10 @@ impl PreviewCache {
         Self { dir, cap }
     }
 
-    /// `<cache dir>/rustune/skin-preview`, capped at [`PREVIEW_CACHE_CAP`].
+    /// `<cache dir>/waimea/skin-preview`, capped at [`PREVIEW_CACHE_CAP`].
     pub fn user() -> Self {
         let base = dirs::cache_dir().unwrap_or_else(std::env::temp_dir);
-        Self::new(base.join("rustune").join("skin-preview"), PREVIEW_CACHE_CAP)
+        Self::new(base.join("waimea").join("skin-preview"), PREVIEW_CACHE_CAP)
     }
 
     fn path(&self, md5: &str) -> Result<PathBuf> {
@@ -140,7 +140,7 @@ mod tests {
     impl TempDir {
         fn new(tag: &str) -> Self {
             let p = std::env::temp_dir().join(format!(
-                "rustune-skincache-{tag}-{}-{:?}",
+                "waimea-skincache-{tag}-{}-{:?}",
                 std::process::id(),
                 std::thread::current().id()
             ));

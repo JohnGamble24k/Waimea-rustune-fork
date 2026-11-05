@@ -66,7 +66,7 @@ impl Query {
     }
 }
 
-/// `rustune search SOURCE QUERY`.
+/// `waimea search SOURCE QUERY`.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Search {
     pub source: SearchSource,
@@ -202,7 +202,8 @@ impl Request {
         if let Some(search) = map.get("search") {
             let search: Search =
                 serde_json::from_value(search.clone()).map_err(|e| format!("bad search: {e}"))?;
-            if search.query.trim().is_empty() {
+            // An empty local search lists the whole library.
+            if search.query.trim().is_empty() && search.source != SearchSource::Local {
                 return Err("bad search: the query is empty".into());
             }
             if search.then == Then::Play(0) || search.limit == Some(0) {
@@ -234,7 +235,7 @@ pub fn error_line(message: &str) -> String {
 /// A reply line: `Err` carries the server's `error` message.
 pub fn check_reply(line: &str) -> Result<Value, String> {
     let value: Value =
-        serde_json::from_str(line.trim()).map_err(|e| format!("bad reply from rustune: {e}"))?;
+        serde_json::from_str(line.trim()).map_err(|e| format!("bad reply from waimea: {e}"))?;
     match value.get("error") {
         Some(Value::String(e)) => Err(e.clone()),
         Some(other) => Err(other.to_string()),
@@ -700,7 +701,8 @@ mod tests {
         assert!(err(r#"{"keys":["Enterr"]}"#).contains("bad key"));
         assert!(err(r#"{"keys":"j"}"#).contains("list"));
         assert!(err(r#"{"search":{"source":"mars","query":"x"}}"#).contains("bad search"));
-        assert!(err(r#"{"search":{"source":"local","query":" "}}"#).contains("empty"));
+        assert!(err(r#"{"search":{"source":"radio","query":" "}}"#).contains("empty"));
+        assert!(Request::parse(r#"{"search":{"source":"local","query":" "}}"#).is_ok());
         assert!(
             err(r#"{"search":{"source":"local","query":"x","then":{"play":0}}}"#)
                 .contains("start at 1")

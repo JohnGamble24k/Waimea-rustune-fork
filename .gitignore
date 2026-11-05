@@ -7,3 +7,5 @@
 .env
 /result
 *.snap
+
+desktop/gen/

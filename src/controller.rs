@@ -788,7 +788,7 @@ impl Controller {
         });
     }
 
-    /// `rustune lyrics`: answer now, or once the lookup finishes.
+    /// `waimea lyrics`: answer now, or once the lookup finishes.
     fn query_lyrics(&mut self, reply: Reply) {
         if !self.app.config.providers.lyrics.enabled {
             let none = LyricsReply::none(
@@ -1324,11 +1324,10 @@ impl Controller {
 
     // ── IPC queries ──────────────────────────────────────────────────────
 
-    /// Answer (now or later) a request from `rustune list|lyrics|screen|
+    /// Answer (now or later) a request from `waimea list|lyrics|screen|
     /// key|search|skin`. Returns whether a redraw is needed.
     fn on_query(&mut self, query: Query, reply: Reply) -> bool {
-        const NO_TUI: &str =
-            "this rustune runs with --daemon: keys and screen need the terminal UI";
+        const NO_TUI: &str = "this waimea runs with --daemon: keys and screen need the terminal UI";
         match query {
             Query::Queue => answer(reply, reply_line(&QueueReply::of(&self.app))),
             Query::Lyrics => self.query_lyrics(reply),
@@ -1551,7 +1550,7 @@ impl Controller {
         answer(reply, reply_line(&out));
     }
 
-    /// `rustune skin`: install if needed, load, switch to the Winamp theme.
+    /// `waimea skin`: install if needed, load, switch to the Winamp theme.
     fn apply_skin(&self, spec: String, reply: Reply) {
         let tx = self.tx.clone();
         tokio::task::spawn_blocking(move || {
@@ -1865,7 +1864,7 @@ impl Controller {
                 self.app.results.clear();
                 if self.app.deps.ytdlp == DepStatus::Missing {
                     self.app.error(
-                        "yt-dlp is not installed, so online search is unavailable (see `rustune doctor`)",
+                        "yt-dlp is not installed, so online search is unavailable (see `waimea doctor`)",
                     );
                 }
             }
@@ -2081,6 +2080,14 @@ impl Controller {
 
     pub fn handle_event(&mut self, event: AppEvent) -> bool {
         match event {
+            AppEvent::DesktopFrame(reply) => {
+                let (image, changed) = self.desktop_frame();
+                let _ = reply.send(image);
+                return changed;
+            }
+            AppEvent::DesktopMouse { kind, x, y, reply } => {
+                let _ = reply.send(self.desktop_mouse(&kind, x, y));
+            }
             AppEvent::Term(Event::Key(key)) => self.on_key(key),
             AppEvent::Term(Event::Mouse(mouse)) => self.on_mouse(mouse),
             AppEvent::Term(Event::Paste(text)) => {
@@ -2399,6 +2406,41 @@ impl Controller {
         wake
     }
 
+    /// The Winamp windows for the desktop app, after the same time-driven
+    /// updates as [`Self::on_tick`]. Also returns whether the status changed.
+    fn desktop_frame(&mut self) -> (Vec<u8>, bool) {
+        let mut changed = self.app.on_tick();
+        changed |= self.sync_position();
+        let playing = self.app.play_status() == PlayStatus::Playing && self.started;
+        let now = Instant::now();
+        let dt = now - self.vis_at;
+        self.vis_at = now;
+        self.app.analyzer.update(self.playback.tap(), dt, playing);
+        let mut image = Vec::new();
+        let view = self.app.player_view();
+        if let Some(skin) = self.app.winamp_skin.as_ref().filter(|s| s.has_bitmaps()) {
+            crate::desktop::render(skin, &view, &mut self.winamp_ui, playing, &mut image);
+        }
+        (image, changed)
+    }
+
+    /// Returns true when the click asked to open files: the app has a native
+    /// dialog for that instead of the terminal prompt.
+    fn desktop_mouse(&mut self, kind: &str, x: u16, y: u16) -> bool {
+        let Some(event) = crate::desktop::mouse_event(&self.winamp_ui, kind, x, y) else {
+            return false;
+        };
+        let view = self.app.player_view();
+        match self.winamp_ui.on_mouse(event, &view) {
+            Some(Command::Eject) => true,
+            Some(cmd) => {
+                self.apply(cmd);
+                false
+            }
+            None => false,
+        }
+    }
+
     /// Time-driven updates; returns whether a redraw is needed.
     fn on_tick(&mut self) -> bool {
         let mut redraw = self.app.on_tick();
@@ -2545,7 +2587,7 @@ pub async fn run(
     }
 }
 
-/// The event loop without a terminal (`rustune --daemon`): the same
+/// The event loop without a terminal (`waimea --daemon`): the same
 /// dispatch, playback clock and autosave as [`run`], minus drawing. Returns
 /// on `Command::Quit`, when every sender is gone, or when `shutdown` resolves.
 pub async fn run_headless(

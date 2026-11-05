@@ -53,7 +53,7 @@ impl InputThread {
         let gate = Arc::new(Gate::default());
         let worker_gate = gate.clone();
         thread::Builder::new()
-            .name("rustune-input".into())
+            .name("waimea-input".into())
             .spawn(move || run(&worker_gate, &tx))?;
         Ok(Self { gate })
     }

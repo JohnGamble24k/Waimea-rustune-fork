@@ -1,4 +1,4 @@
-//! `rustune screen`: the last drawn TUI frame as plain text and as ANSI.
+//! `waimea screen`: the last drawn TUI frame as plain text and as ANSI.
 //! Built from ratatui's buffer right after a draw, only when a client asked.
 
 use std::fmt::Write as _;

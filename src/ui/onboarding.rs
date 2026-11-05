@@ -14,7 +14,7 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
     let theme = &app.theme;
 
     let outer = Block::bordered()
-        .title(" rustune setup ")
+        .title(" waimea setup ")
         .title_style(
             Style::default()
                 .fg(ratatui::style::Color::Cyan)
@@ -62,7 +62,7 @@ fn render_welcome(frame: &mut Frame, area: Rect, theme: &Theme) {
     let lines = vec![
         Line::from(""),
         Line::from(Span::styled(
-            "  rustune",
+            "  waimea",
             Style::default()
                 .add_modifier(Modifier::BOLD)
                 .fg(ratatui::style::Color::Cyan),

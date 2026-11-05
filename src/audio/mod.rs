@@ -16,6 +16,7 @@
 //! * Idle costs nothing: the output stream is paused when nothing plays and
 //!   every helper thread parks instead of polling.
 
+pub mod chime;
 mod decode;
 mod dsp;
 mod engine;

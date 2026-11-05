@@ -446,7 +446,7 @@ mod tests {
 
     #[test]
     fn read_playlist_from_disk_resolves_relative_to_file() {
-        let dir = std::env::temp_dir().join(format!("rustune-pl-test-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("waimea-pl-test-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let m3u = dir.join("list.M3U8");
         std::fs::write(&m3u, "song.mp3\n").unwrap();

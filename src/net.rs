@@ -29,7 +29,7 @@ static AGENT: LazyLock<ureq::Agent> = LazyLock::new(|| {
         .timeout_recv_response(Some(READ_TIMEOUT))
         .timeout_recv_body(Some(CALL_TIMEOUT))
         .timeout_global(Some(CALL_TIMEOUT))
-        .user_agent(concat!("rustune/", env!("CARGO_PKG_VERSION")))
+        .user_agent(concat!("waimea/", env!("CARGO_PKG_VERSION")))
         .build()
         .into()
 });

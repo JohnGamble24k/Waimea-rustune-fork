@@ -1,7 +1,7 @@
-name: rustune
-title: rustune
+name: waimea
+title: waimea
 base: core24
-adopt-info: rustune
+adopt-info: waimea
 summary: Terminal music player with radio, podcasts and Winamp skins
 description: |
   A lightweight terminal music player: native Rust audio engine, visualizer,
@@ -10,16 +10,16 @@ description: |
 
   The snap is strictly confined. It plays local files from your home folder
   and removable media (connect `removable-media` with
-  `sudo snap connect rustune:removable-media`) and streams over the network.
+  `sudo snap connect waimea:removable-media`) and streams over the network.
   Audio goes through PulseAudio or PipeWire. Online search (yt-dlp) and the
   ffmpeg fallback for exotic formats are not available in the snap, because
   a strict snap cannot run tools installed on the host; use another install
   method if you need them.
 license: MIT
-website: https://rustune.dzulfikar.com
-source-code: https://github.com/dzulfikar08/rustune
-issues: https://github.com/dzulfikar08/rustune/issues
-contact: https://github.com/dzulfikar08/rustune/issues
+website: https://github.com/JohnGamble24k/Waimea
+source-code: https://github.com/JohnGamble24k/Waimea
+issues: https://github.com/JohnGamble24k/Waimea/issues
+contact: https://github.com/JohnGamble24k/Waimea/issues
 grade: stable
 confinement: strict
 
@@ -35,8 +35,8 @@ layout:
     bind: $SNAP/usr/share/alsa
 
 apps:
-  rustune:
-    command: bin/rustune
+  waimea:
+    command: bin/waimea
     command-chain: [bin/pulse-launch]
     environment:
       ALSA_CONFIG_PATH: $SNAP/etc/asound.conf
@@ -47,10 +47,10 @@ apps:
 slots:
   mpris:
     interface: mpris
-    name: rustune
+    name: waimea
 
 parts:
-  rustune:
+  waimea:
     plugin: rust
     source: .
     build-packages: [libasound2-dev, pkg-config]
@@ -58,10 +58,10 @@ parts:
     override-pull: |
       craftctl default
       craftctl set version="$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n1)"
-    # libasound2-plugins drags in ffmpeg, jack and more for plugins rustune
+    # libasound2-plugins drags in ffmpeg, jack and more for plugins waimea
     # never loads; keep alsa-lib, its PulseAudio plugin and libpulse's deps.
     prime:
-      - bin/rustune
+      - bin/waimea
       - usr/share/alsa
       - usr/lib/*/libasound.so.2*
       - usr/lib/*/alsa-lib/libasound_module_pcm_pulse.so

@@ -1,5 +1,5 @@
 //! OS media integration: media keys, headset buttons and the system's
-//! now-playing widgets control rustune and show what it plays.
+//! now-playing widgets control waimea and show what it plays.
 //!
 //! - Linux: MPRIS2 on the D-Bus session bus (`mpris`, over the small
 //!   built-in client in `dbus`). Off when there is no session bus.
@@ -83,7 +83,7 @@ pub fn host(app: impl FnOnce() -> anyhow::Result<()> + Send + 'static) -> anyhow
     app()
 }
 
-/// One status line for `rustune doctor`.
+/// One status line for `waimea doctor`.
 pub fn doctor(enabled: bool) -> String {
     if enabled {
         platform_doctor()

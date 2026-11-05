@@ -90,7 +90,7 @@ fn sample_view() -> PlayerView<'static> {
         0.2, 0.15, 0.1,
     ];
     PlayerView {
-        title: "rustune - skin preview",
+        title: "waimea - skin preview",
         status: PlayStatus::Playing,
         elapsed: Duration::from_secs(154),
         duration: Some(Duration::from_secs(251)),

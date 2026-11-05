@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>Waimea</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="player" aria-label="Speler">
+  <canvas id="winamp" width="275" height="116" aria-label="Winamp-speler"></canvas>
+  <p id="loading">Skin laden</p>
+  <svg class="swell" viewBox="0 0 550 120" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0 70 C70 30 120 100 200 72 S330 30 400 68 S500 100 550 60 V120 H0 Z"/>
+  </svg>
+</main>
+<section class="library" aria-label="Bibliotheek">
+  <header data-tauri-drag-region>
+    <nav role="tablist">
+      <button role="tab" data-source="local" aria-selected="true">Muziek</button>
+      <button role="tab" data-source="radio" aria-selected="false">Radio</button>
+      <button role="tab" data-source="online" aria-selected="false">YouTube</button>
+    </nav>
+  </header>
+  <form id="search" role="search">
+    <input id="query" type="search" autocomplete="off" spellcheck="false" aria-label="Zoeken">
+  </form>
+  <div id="chips" hidden></div>
+  <div id="add">
+    <button id="add-files" type="button">Bestanden toevoegen</button>
+    <button id="add-folder" type="button">Map toevoegen</button>
+  </div>
+  <ul id="results" aria-live="polite"></ul>
+  <p id="message" role="status"></p>
+</section>
+<script src="app.js"></script>
+</body>
+</html>

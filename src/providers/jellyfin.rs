@@ -227,12 +227,12 @@ fn device_id(base: &str, user: &str) -> String {
         hash ^= u64::from(b);
         hash = hash.wrapping_mul(0x0100_0000_01b3);
     }
-    format!("rustune-{hash:016x}")
+    format!("waimea-{hash:016x}")
 }
 
 fn auth_header(device_id: &str, token: Option<&str>) -> String {
     let mut h = format!(
-        "MediaBrowser Client=\"rustune\", Device=\"rustune\", DeviceId=\"{device_id}\", Version=\"{}\"",
+        "MediaBrowser Client=\"waimea\", Device=\"waimea\", DeviceId=\"{device_id}\", Version=\"{}\"",
         env!("CARGO_PKG_VERSION")
     );
     if let Some(token) = token {
@@ -668,7 +668,7 @@ mod tests {
         let c = session();
         let url = c.stream_url("abc/def");
         assert!(url.starts_with(
-            "https://jf.example.com/Audio/abc%2Fdef/universal?UserId=user1&DeviceId=rustune-"
+            "https://jf.example.com/Audio/abc%2Fdef/universal?UserId=user1&DeviceId=waimea-"
         ));
         assert_eq!(query_param(&url, "api_key").as_deref(), Some("tok123"));
         assert_eq!(
@@ -710,7 +710,7 @@ mod tests {
         assert_eq!(
             auth_header("dev", Some("t")),
             format!(
-                "MediaBrowser Client=\"rustune\", Device=\"rustune\", DeviceId=\"dev\", Version=\"{}\", Token=\"t\"",
+                "MediaBrowser Client=\"waimea\", Device=\"waimea\", DeviceId=\"dev\", Version=\"{}\", Token=\"t\"",
                 env!("CARGO_PKG_VERSION")
             )
         );
@@ -721,7 +721,7 @@ mod tests {
     fn device_id_is_stable_and_distinct() {
         assert_eq!(device_id("https://a", "u"), device_id("https://a", "u"));
         assert_ne!(device_id("https://a", "u"), device_id("https://a", "v"));
-        assert_eq!(device_id("x", "y").len(), "rustune-".len() + 16);
+        assert_eq!(device_id("x", "y").len(), "waimea-".len() + 16);
     }
 
     #[test]
@@ -804,7 +804,7 @@ mod tests {
             serde_json::from_str(&requests[0][requests[0].find("\r\n\r\n").unwrap() + 4..])
                 .unwrap();
         assert_eq!(body, serde_json::json!({"Username": "alice", "Pw": "pw"}));
-        assert!(requests[0].contains("MediaBrowser Client=\"rustune\""));
+        assert!(requests[0].contains("MediaBrowser Client=\"waimea\""));
         assert!(request_line(&requests[1]).starts_with(
             "GET /Items?userId=u-42&includeItemTypes=MusicAlbum&recursive=true&sortBy=ProductionYear%2CSortName&sortOrder=Descending"
         ));

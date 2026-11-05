@@ -16,6 +16,15 @@ use crate::skin_browser::SkinEntry;
 /// thread), playback backends and background tasks.
 pub enum AppEvent {
     Term(crossterm::event::Event),
+    /// The desktop app wants the current image (`crate::desktop::render`).
+    DesktopFrame(std::sync::mpsc::SyncSender<Vec<u8>>),
+    /// Mouse input from the desktop app; answers whether to open files.
+    DesktopMouse {
+        kind: String,
+        x: u16,
+        y: u16,
+        reply: std::sync::mpsc::SyncSender<bool>,
+    },
     /// Online search results; `token` identifies the request.
     ItemsReady {
         token: u64,

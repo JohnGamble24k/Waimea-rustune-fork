@@ -1,5 +1,5 @@
-//! `rustune play|pause|status|volume|...`: the command-line remote, plus
-//! handing `rustune <files>` to an instance that is already running.
+//! `waimea play|pause|status|volume|...`: the command-line remote, plus
+//! handing `waimea <files>` to an instance that is already running.
 
 use std::io::{self, BufRead, BufReader, Write};
 use std::path::Path;
@@ -56,7 +56,7 @@ pub enum Remote {
         ansi: bool,
         json: bool,
     },
-    /// A raw protocol line (`rustune send`).
+    /// A raw protocol line (`waimea send`).
     Raw(String),
 }
 
@@ -159,7 +159,7 @@ fn parse_keys(args: &[String]) -> Result<Remote, String> {
     Ok(Remote::Keys(keys))
 }
 
-/// Parse `rustune <name> <args>...` for a name in [`SUBCOMMANDS`].
+/// Parse `waimea <name> <args>...` for a name in [`SUBCOMMANDS`].
 pub fn parse(name: &str, args: &[String]) -> Result<Remote, String> {
     let no_args = |remote: Remote| match args.first() {
         None => Ok(remote),
@@ -329,7 +329,7 @@ enum Failure {
 
 impl From<io::Error> for Failure {
     fn from(e: io::Error) -> Self {
-        Self::Failed(format!("connection to rustune failed: {e}"))
+        Self::Failed(format!("connection to waimea failed: {e}"))
     }
 }
 
@@ -375,7 +375,7 @@ impl Client {
         self.send(req)?;
         let line = self
             .read()?
-            .ok_or_else(|| "rustune closed the connection".to_string())?;
+            .ok_or_else(|| "waimea closed the connection".to_string())?;
         Ok(check_reply(line)?)
     }
 
@@ -405,14 +405,14 @@ impl Client {
         conn.flush()?;
         let reply = self
             .read()?
-            .ok_or_else(|| "rustune closed the connection".to_string())?;
+            .ok_or_else(|| "waimea closed the connection".to_string())?;
         Ok(reply.to_string())
     }
 }
 
 fn decode<T: serde::de::DeserializeOwned>(value: Value, what: &str) -> Result<T, Failure> {
     serde_json::from_value(value)
-        .map_err(|e| Failure::Failed(format!("bad {what} from rustune: {e}")))
+        .map_err(|e| Failure::Failed(format!("bad {what} from waimea: {e}")))
 }
 
 /// The queue entry at 1-based `n`, or a clear error.
@@ -556,20 +556,20 @@ pub fn run(remote: Remote) -> ExitCode {
         Ok(()) => ExitCode::SUCCESS,
         Err(Failure::NotRunning) => {
             eprintln!(
-                "rustune: no running instance ({} not reachable); start one with \
-                 'rustune' or 'rustune --daemon'",
+                "waimea: no running instance ({} not reachable); start one with \
+                 'waimea' or 'waimea --daemon'",
                 endpoint.display()
             );
             ExitCode::FAILURE
         }
         Err(Failure::Failed(msg)) => {
-            eprintln!("rustune: {msg}");
+            eprintln!("waimea: {msg}");
             ExitCode::FAILURE
         }
     }
 }
 
-/// `rustune <files>` while an instance runs: queue them there instead of
+/// `waimea <files>` while an instance runs: queue them there instead of
 /// starting a second player. `None` = nothing is running.
 pub fn hand_off(inputs: &[String]) -> Option<ExitCode> {
     let endpoint = transport::endpoint();
@@ -578,14 +578,14 @@ pub fn hand_off(inputs: &[String]) -> Option<ExitCode> {
     Some(match result {
         Ok(()) => {
             println!(
-                "rustune: queued {} item(s) in the running instance",
+                "waimea: queued {} item(s) in the running instance",
                 inputs.len()
             );
             ExitCode::SUCCESS
         }
         Err(Failure::NotRunning) => return None,
         Err(Failure::Failed(msg)) => {
-            eprintln!("rustune: {msg}");
+            eprintln!("waimea: {msg}");
             ExitCode::FAILURE
         }
     })
@@ -595,7 +595,7 @@ fn clock(secs: u64) -> String {
     format!("{}:{:02}", secs / 60, secs % 60)
 }
 
-/// Human-readable `rustune status`.
+/// Human-readable `waimea status`.
 pub fn format_status(s: &Status) -> String {
     let state = match s.status {
         PlayStatus::Playing => "Playing",
@@ -650,7 +650,7 @@ fn duration_suffix(duration: Option<u64>) -> String {
     duration.map_or_else(String::new, |d| format!("  [{}]", clock(d)))
 }
 
-/// `rustune list`: `>` marks the current track, `*` the cursor.
+/// `waimea list`: `>` marks the current track, `*` the cursor.
 pub fn format_queue(queue: &QueueReply) -> String {
     if queue.items.is_empty() {
         return "(the queue is empty)\n".to_string();
@@ -675,7 +675,7 @@ pub fn format_queue(queue: &QueueReply) -> String {
     out
 }
 
-/// `rustune search`: numbered results, then what was done with them.
+/// `waimea search`: numbered results, then what was done with them.
 pub fn format_search(reply: &SearchReply) -> String {
     let mut out = String::new();
     if let Some(opened) = &reply.opened {
@@ -718,7 +718,7 @@ pub fn format_search(reply: &SearchReply) -> String {
     out
 }
 
-/// `rustune lyrics`: timed lines as `[m:ss] text`, else the plain text.
+/// `waimea lyrics`: timed lines as `[m:ss] text`, else the plain text.
 pub fn format_lyrics(reply: &LyricsReply) -> String {
     if !reply.found {
         let why = reply.message.as_deref().unwrap_or("none");

@@ -1,4 +1,4 @@
-//! Session persistence (`<config dir>/rustune/state.toml`): volume, balance,
+//! Session persistence (`<config dir>/waimea/state.toml`): volume, balance,
 //! EQ, shuffle/repeat, skin, theme, visualizer mode and the last queue with
 //! resume position.
 
@@ -233,7 +233,7 @@ mod tests {
 
     #[test]
     fn round_trip_through_disk() {
-        let dir = std::env::temp_dir().join(format!("rustune-state-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("waimea-state-{}", std::process::id()));
         let path = dir.join("nested").join("state.toml");
         let state = sample();
         state.save(&path).unwrap();

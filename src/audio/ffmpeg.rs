@@ -144,7 +144,7 @@ impl Ffmpeg {
         if let (Some(mut reader), Some(mut stdin)) = (pipe, stdin) {
             // Ends when ffmpeg exits (broken pipe) or the source ends.
             thread::Builder::new()
-                .name("rustune-ffpipe".into())
+                .name("waimea-ffpipe".into())
                 .spawn(move || {
                     let _ = io::copy(&mut reader, &mut stdin);
                 })?;
@@ -157,7 +157,7 @@ impl Ffmpeg {
             seekable: self.input.is_some(),
         };
         thread::Builder::new()
-            .name("rustune-fflog".into())
+            .name("waimea-fflog".into())
             .spawn(move || ctx.run(stderr, ready_tx))?;
         if self.track.has(STOP) {
             self.kill();

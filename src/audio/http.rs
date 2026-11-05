@@ -23,7 +23,7 @@ static AGENT: LazyLock<Agent> = LazyLock::new(|| {
             .timeout_per_read(Some(Duration::from_secs(20)))
             // Byte offsets must match the resource for Range requests.
             .accept_encoding("identity")
-            .user_agent(concat!("rustune/", env!("CARGO_PKG_VERSION")))
+            .user_agent(concat!("waimea/", env!("CARGO_PKG_VERSION")))
             .build(),
     )
 });

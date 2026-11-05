@@ -1,43 +1,12 @@
-mod app;
-mod audio;
-mod browse;
-mod cli;
-mod command;
-mod config;
-mod controller;
-mod eq_presets;
-mod event;
-mod extractor;
-mod gfx;
-mod install;
-mod ipc;
-mod keymap;
-mod library;
-mod media;
-mod mediactl;
-mod net;
-mod playback;
-mod playlist_io;
-mod providers;
-mod queue;
-mod report;
-mod skin;
-mod skin_browser;
-mod skin_cache;
-mod state;
-mod tap;
-mod term_input;
-mod theme;
-mod ui;
-mod view;
-mod vis;
-mod winamp;
-
 use std::process::ExitCode;
 use std::time::Duration;
 
 use anyhow::Result;
 use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
+
+use waimea::{
+    audio, cli, config, controller, gfx, ipc, mediactl, playback, runtime, state, term_input,
+};
 
 use cli::Cli;
 use config::Config;
@@ -47,18 +16,12 @@ use playback::Playback;
 use state::SessionState;
 use term_input::InputThread;
 
-fn runtime() -> std::io::Result<tokio::runtime::Runtime> {
-    tokio::runtime::Builder::new_current_thread()
-        .enable_all()
-        .build()
-}
-
 fn main() -> ExitCode {
     let mut args = std::env::args();
-    let program = args.next().unwrap_or_else(|| "rustune".into());
+    let program = args.next().unwrap_or_else(|| "waimea".into());
     match cli::parse(args) {
         Err(msg) => {
-            eprintln!("rustune: {msg}\nRun '{program} --help' for usage.");
+            eprintln!("waimea: {msg}\nRun '{program} --help' for usage.");
             ExitCode::from(2)
         }
         Ok(Cli::Help) => {
@@ -66,7 +29,7 @@ fn main() -> ExitCode {
             ExitCode::SUCCESS
         }
         Ok(Cli::Version) => {
-            println!("rustune {}", env!("CARGO_PKG_VERSION"));
+            println!("waimea {}", env!("CARGO_PKG_VERSION"));
             ExitCode::SUCCESS
         }
         Ok(Cli::Doctor) => match runtime() {
@@ -75,7 +38,7 @@ fn main() -> ExitCode {
                 ExitCode::SUCCESS
             }
             Err(e) => {
-                eprintln!("rustune: {e}");
+                eprintln!("waimea: {e}");
                 ExitCode::FAILURE
             }
         },
@@ -84,7 +47,7 @@ fn main() -> ExitCode {
         Ok(Cli::Daemon { inputs }) => match mediactl::host(move || ipc::daemon::run(inputs)) {
             Ok(()) => ExitCode::SUCCESS,
             Err(e) => {
-                eprintln!("rustune: {e:#}");
+                eprintln!("waimea: {e:#}");
                 ExitCode::FAILURE
             }
         },
@@ -101,7 +64,7 @@ fn main() -> ExitCode {
             match mediactl::host(move || run_tui(inputs)) {
                 Ok(()) => ExitCode::SUCCESS,
                 Err(e) => {
-                    eprintln!("rustune: {e:#}");
+                    eprintln!("waimea: {e:#}");
                     ExitCode::FAILURE
                 }
             }
@@ -145,6 +108,10 @@ fn run_tui(inputs: Vec<String>) -> Result<()> {
         // Open the audio device before the TUI owns the screen: some audio
         // stacks print diagnostics while probing devices.
         let playback = Playback::new(tx.clone());
+        // Not over music the user asked for.
+        if config.startup_sound && inputs.is_empty() {
+            audio::chime::play(state.volume);
+        }
 
         let terminal = ratatui::init();
         if let Err(e) = crossterm::execute!(std::io::stdout(), EnableMouseCapture) {

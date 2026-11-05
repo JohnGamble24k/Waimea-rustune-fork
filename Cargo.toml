@@ -1,10 +1,10 @@
 [package]
-name = "rustune"
+name = "waimea"
 version = "0.3.7"
 edition = "2021"
-description = "A terminal music player with online audio search, local playback, and Winamp skin support"
-repository = "https://github.com/dzulfikar08/rustune"
-homepage = "https://rustune.dzulfikar.com"
+description = "A platform-agnostic, agent-ready terminal music player with online audio search, local playback, and Winamp skin support"
+repository = "https://github.com/JohnGamble24k/Waimea"
+homepage = "https://github.com/JohnGamble24k/Waimea"
 license = "MIT"
 keywords = ["music", "player", "terminal", "tui", "audio"]
 categories = ["command-line-utilities", "multimedia::audio"]
@@ -13,8 +13,8 @@ readme = "README.md"
 # a test); screenshots, icons, docs and packaging files stay out.
 include = ["/src/**/*.rs", "/Cargo.toml", "/Cargo.lock", "/README.md", "/LICENSE"]
 
-# cargo-binstall: the release archives (`rustune-<version>-<target>.tar.gz`,
-# `.zip` on Windows) hold the binary in a `rustune-<version>-<target>/` folder.
+# cargo-binstall: the release archives (`waimea-<version>-<target>.tar.gz`,
+# `.zip` on Windows) hold the binary in a `waimea-<version>-<target>/` folder.
 [package.metadata.binstall]
 pkg-url = "{ repo }/releases/download/v{ version }/{ name }-{ version }-{ target }{ archive-suffix }"
 bin-dir = "{ name }-{ version }-{ target }/{ bin }{ binary-ext }"
@@ -27,7 +27,7 @@ pkg-fmt = "zip"
 # are spelled out instead of `$auto` so one .deb fits both Debian 12
 # (libasound2) and Ubuntu 24.04+ / Debian 13 (libasound2t64).
 [package.metadata.deb]
-maintainer = "Dzulfikar Ats Tsauri <dzulfikar.at@gmail.com>"
+maintainer = "JohnGamble24k <JohnGamble24k@users.noreply.github.com>"
 copyright = "2026, dzulfikar08"
 license-file = ["LICENSE", "0"]
 section = "sound"
@@ -40,16 +40,20 @@ synced lyrics, Internet radio, podcasts, Subsonic and Jellyfin, and \
 pixel-accurate Winamp skins. Online search and streaming use yt-dlp; ffmpeg \
 adds exotic formats and HLS streams."""
 assets = [
-    ["target/release/rustune", "usr/bin/", "755"],
-    ["README.md", "usr/share/doc/rustune/README.md", "644"],
+    ["target/release/waimea", "usr/bin/", "755"],
+    ["README.md", "usr/share/doc/waimea/README.md", "644"],
+    ["packaging/linux/waimea.desktop", "usr/share/applications/", "644"],
+    ["assets/macos/icon.svg", "usr/share/icons/hicolor/scalable/apps/waimea.svg", "644"],
 ]
 
 # `cargo generate-rpm --target <triple>` in the release workflow.
 [package.metadata.generate-rpm]
 assets = [
-    { source = "target/release/rustune", dest = "/usr/bin/rustune", mode = "755" },
-    { source = "README.md", dest = "/usr/share/doc/rustune/README.md", mode = "644", doc = true },
-    { source = "LICENSE", dest = "/usr/share/licenses/rustune/LICENSE", mode = "644", doc = true },
+    { source = "target/release/waimea", dest = "/usr/bin/waimea", mode = "755" },
+    { source = "README.md", dest = "/usr/share/doc/waimea/README.md", mode = "644", doc = true },
+    { source = "LICENSE", dest = "/usr/share/licenses/waimea/LICENSE", mode = "644", doc = true },
+    { source = "packaging/linux/waimea.desktop", dest = "/usr/share/applications/waimea.desktop", mode = "644" },
+    { source = "assets/macos/icon.svg", dest = "/usr/share/icons/hicolor/scalable/apps/waimea.svg", mode = "644" },
 ]
 
 [package.metadata.generate-rpm.requires]
@@ -59,6 +63,9 @@ alsa-lib = "*"
 [package.metadata.generate-rpm.recommends]
 "/usr/bin/yt-dlp" = "*"
 "/usr/bin/ffmpeg" = "*"
+
+[workspace]
+members = ["desktop"]
 
 [dependencies]
 ratatui = "0.29"

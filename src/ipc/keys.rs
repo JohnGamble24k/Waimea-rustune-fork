@@ -1,4 +1,4 @@
-//! Key specs for `rustune key` / `{"keys":[...]}`: `j`, `Enter`, `ctrl+k`,
+//! Key specs for `waimea key` / `{"keys":[...]}`: `j`, `Enter`, `ctrl+k`,
 //! `shift+Right`. They become the same `KeyEvent`s a terminal reports.
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};

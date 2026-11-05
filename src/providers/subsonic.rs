@@ -20,7 +20,7 @@ use crate::media::{MediaItem, SourceKind};
 /// older servers do not reject us with error 30.
 pub const API_VERSION: &str = "1.13.0";
 /// Client name sent as `c`.
-pub const CLIENT_NAME: &str = "rustune";
+pub const CLIENT_NAME: &str = "waimea";
 
 const MAX_BODY: u64 = 16 << 20;
 
@@ -553,12 +553,12 @@ mod tests {
         assert_eq!(
             c.url_with_salt("search3", &[("query", "a&b c")], "c19b2d"),
             "https://music.example.com/rest/search3?u=alice&t=26719a1196d2a940705a59634eb18eab\
-             &s=c19b2d&v=1.13.0&c=rustune&f=json&query=a%26b%20c"
+             &s=c19b2d&v=1.13.0&c=waimea&f=json&query=a%26b%20c"
         );
         assert_eq!(
             c.stream_url_with_salt("tr/1", "c19b2d"),
             "https://music.example.com/rest/stream?u=alice&t=26719a1196d2a940705a59634eb18eab\
-             &s=c19b2d&v=1.13.0&c=rustune&f=json&id=tr%2F1&format=opus&maxBitRate=128"
+             &s=c19b2d&v=1.13.0&c=waimea&f=json&id=tr%2F1&format=opus&maxBitRate=128"
         );
         let plain = SubsonicClient::new(&SubsonicConfig {
             url: "http://h".into(),
@@ -716,7 +716,7 @@ mod tests {
         );
         assert!(
             line.ends_with(
-                "&v=1.13.0&c=rustune&f=json&type=alphabeticalByName&offset=20&size=10 HTTP/1.1"
+                "&v=1.13.0&c=waimea&f=json&type=alphabeticalByName&offset=20&size=10 HTTP/1.1"
             ),
             "{line}"
         );

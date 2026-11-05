@@ -1,29 +1,12 @@
 name: Packaging
 
 # Checks the packaging files that release.yml does not exercise: install.sh
-# against the published release, the crate, the Nix flake, the AUR PKGBUILDs
-# and the winget manifests. (The snap has its own workflow, snap.yml; the
+# against the published release, the crate, the Nix flake, and the AUR PKGBUILDs.
+# (The snap has its own workflow, snap.yml; the
 # .deb/.rpm and archives are built and installed by release.yml.)
+# Manual until the first release exists: install.sh and the AUR packages
+# download it. Add push/pull_request triggers back after that.
 on:
-  push:
-    branches: ["**"]
-    paths:
-      - "install.sh"
-      - "flake.nix"
-      - "flake.lock"
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - "packaging/**"
-      - ".github/workflows/packaging.yml"
-  pull_request:
-    paths:
-      - "install.sh"
-      - "flake.nix"
-      - "flake.lock"
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - "packaging/**"
-      - ".github/workflows/packaging.yml"
   workflow_dispatch:
 
 concurrency:
@@ -45,37 +28,36 @@ jobs:
       - uses: actions/checkout@v4
       - if: runner.os == 'Linux'
         run: shellcheck install.sh
-      # Releases up to v0.3.6 have no SHA256SUMS, so install.sh asks the
-      # GitHub API; the token keeps shared runner IPs off its rate limit.
+      # The token keeps shared runner IPs off its rate limit.
       - name: Install the published release
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -x
-          RUSTUNE_INSTALL_DIR="$RUNNER_TEMP/latest" sh install.sh
-          "$RUNNER_TEMP/latest/rustune" --version
-          RUSTUNE_VERSION=v0.3.6 RUSTUNE_INSTALL_DIR="$RUNNER_TEMP/pinned" sh install.sh
-          test "$("$RUNNER_TEMP/pinned/rustune" --version)" = "rustune 0.3.6"
+          WAIMEA_INSTALL_DIR="$RUNNER_TEMP/latest" sh install.sh
+          "$RUNNER_TEMP/latest/waimea" --version
+          WAIMEA_VERSION=v0.3.7 WAIMEA_INSTALL_DIR="$RUNNER_TEMP/pinned" sh install.sh
+          test "$("$RUNNER_TEMP/pinned/waimea" --version)" = "waimea 0.3.7"
       - name: Install from a mock release folder
         run: |
           set -x
           os=linux; [ "$(uname -s)" = Darwin ] && os=macos
           arch=$(uname -m); [ "$arch" = arm64 ] && arch=aarch64
-          asset="rustune-$arch-$os"
+          asset="waimea-$arch-$os"
           mkdir -p mock bad
-          cp "$RUNNER_TEMP/pinned/rustune" "mock/$asset"
-          cp "$RUNNER_TEMP/pinned/rustune" "bad/$asset"
+          cp "$RUNNER_TEMP/pinned/waimea" "mock/$asset"
+          cp "$RUNNER_TEMP/pinned/waimea" "bad/$asset"
           (cd mock && shasum -a 256 "$asset" > SHA256SUMS)
           echo "0000000000000000000000000000000000000000000000000000000000000000  $asset" > bad/SHA256SUMS
 
-          RUSTUNE_BASE_URL="file://$PWD/mock" RUSTUNE_INSTALL_DIR="$RUNNER_TEMP/mock" sh install.sh
-          "$RUNNER_TEMP/mock/rustune" --version
+          WAIMEA_BASE_URL="file://$PWD/mock" WAIMEA_INSTALL_DIR="$RUNNER_TEMP/mock" sh install.sh
+          "$RUNNER_TEMP/mock/waimea" --version
 
-          if RUSTUNE_BASE_URL="file://$PWD/bad" RUSTUNE_INSTALL_DIR="$RUNNER_TEMP/bad" sh install.sh; then
+          if WAIMEA_BASE_URL="file://$PWD/bad" WAIMEA_INSTALL_DIR="$RUNNER_TEMP/bad" sh install.sh; then
             echo "::error::install.sh accepted a wrong checksum"
             exit 1
           fi
-          test ! -e "$RUNNER_TEMP/bad/rustune"
+          test ! -e "$RUNNER_TEMP/bad/waimea"
 
   crate:
     name: cargo publish --dry-run
@@ -110,7 +92,7 @@ jobs:
         run: |
           out=$(nix run --no-update-lock-file . -- --version)
           echo "$out"
-          test "$out" = "rustune $(nix eval --raw .#default.version)"
+          test "$out" = "waimea $(nix eval --raw .#default.version)"
           nix run --no-update-lock-file . -- --help > help.txt && grep -q USAGE help.txt
           nix flake check --no-update-lock-file --no-build
 
@@ -121,7 +103,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        pkg: [rustune-bin, rustune]
+        pkg: [waimea-bin, waimea]
     steps:
       - run: pacman -Syu --noconfirm --needed base-devel git namcap sudo
       - uses: actions/checkout@v4
@@ -144,33 +126,11 @@ jobs:
         run: |
           su builder -c 'cd ~/pkg && namcap ./*.pkg.tar.zst' | tee namcap.txt
           ! grep -q ' E: ' namcap.txt
-      - name: Run rustune
+      - name: Run waimea
         run: |
           version=$(sed -n 's/^pkgver=//p' packaging/aur/${{ matrix.pkg }}/PKGBUILD)
-          out=$(rustune --version)
+          out=$(waimea --version)
           echo "$out"
-          test "$out" = "rustune $version"
-          rustune --help > help.txt && grep -q USAGE help.txt
+          test "$out" = "waimea $version"
+          waimea --help > help.txt && grep -q USAGE help.txt
           pacman -Qi ${{ matrix.pkg }}
-
-  winget:
-    name: winget manifests
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: winget validate
-        run: |
-          winget --version
-          Get-ChildItem -Directory packaging/winget/manifests/d/dzulfikar08/rustune | ForEach-Object {
-            winget validate --manifest $_.FullName
-            if ($LASTEXITCODE -ne 0) { exit 1 }
-          }
-      - name: Install from the manifest
-        run: |
-          $dir = Get-ChildItem -Directory packaging/winget/manifests/d/dzulfikar08/rustune | Sort-Object { [version]$_.Name } | Select-Object -Last 1
-          winget settings --enable LocalManifestFiles
-          winget install --manifest $dir.FullName --accept-source-agreements --accept-package-agreements --disable-interactivity
-          if ($LASTEXITCODE -ne 0) { exit 1 }
-          $out = & "$env:LOCALAPPDATA\Microsoft\WinGet\Links\rustune.exe" --version
-          Write-Output $out
-          if ($out -ne "rustune $($dir.Name)") { exit 1 }

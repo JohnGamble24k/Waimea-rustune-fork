@@ -68,7 +68,7 @@ impl IpcServer {
         let stop = Arc::new(AtomicBool::new(false));
         let (accept_shared, accept_stop) = (shared.clone(), stop.clone());
         std::thread::Builder::new()
-            .name("rustune-ipc".into())
+            .name("waimea-ipc".into())
             .spawn(move || accept_loop(listener, &tx, &accept_shared, &accept_stop))?;
         Ok(Self {
             endpoint,
@@ -126,7 +126,7 @@ fn accept_loop(
         };
         let (tx, shared) = (tx.clone(), shared.clone());
         let _ = std::thread::Builder::new()
-            .name("rustune-ipc-client".into())
+            .name("waimea-ipc-client".into())
             .spawn(move || serve(conn, &tx, &shared));
     }
 }
@@ -178,7 +178,7 @@ fn serve(conn: Conn, tx: &UnboundedSender<AppEvent>, shared: &Shared) {
 fn apply(tx: &UnboundedSender<AppEvent>, cmd: crate::command::Command) -> String {
     let (done, applied) = std::sync::mpsc::sync_channel(1);
     if tx.send(AppEvent::Command(cmd)).is_err() || tx.send(AppEvent::Flush(done)).is_err() {
-        return error_line("rustune is shutting down");
+        return error_line("waimea is shutting down");
     }
     // A busy player (e.g. a dependency installer in the foreground) still
     // applies the command later; the reply just doesn't wait for it.
@@ -191,15 +191,15 @@ fn ask(tx: &UnboundedSender<AppEvent>, query: Query) -> String {
     let timeout = query.timeout();
     let (reply, answer) = std::sync::mpsc::sync_channel(1);
     if tx.send(AppEvent::Query { query, reply }).is_err() {
-        return error_line("rustune is shutting down");
+        return error_line("waimea is shutting down");
     }
     match answer.recv_timeout(timeout) {
         Ok(line) => line,
         Err(RecvTimeoutError::Timeout) => error_line(&format!(
-            "rustune did not answer within {} s",
+            "waimea did not answer within {} s",
             timeout.as_secs()
         )),
-        Err(RecvTimeoutError::Disconnected) => error_line("rustune dropped the request"),
+        Err(RecvTimeoutError::Disconnected) => error_line("waimea dropped the request"),
     }
 }
 
@@ -302,7 +302,7 @@ mod tests {
     #[test]
     fn socket_round_trip() {
         let dir = temp_dir("rt");
-        let path = dir.join("rustune.sock");
+        let path = dir.join("waimea.sock");
         let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
         let server = IpcServer::start(path.clone(), tx).unwrap();
         let mode = std::os::unix::fs::PermissionsExt::mode(
@@ -373,7 +373,7 @@ mod tests {
     #[test]
     fn stale_socket_is_replaced_but_live_one_is_not() {
         let dir = temp_dir("stale");
-        let path = dir.join("rustune.sock");
+        let path = dir.join("waimea.sock");
         // A socket file nobody listens on: left behind by a crash.
         drop(UnixListener::bind(&path).unwrap());
         assert!(path.exists());

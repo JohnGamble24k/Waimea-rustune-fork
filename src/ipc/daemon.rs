@@ -1,4 +1,4 @@
-//! `rustune --daemon`: the controller, engine and queue without a terminal,
+//! `waimea --daemon`: the controller, engine and queue without a terminal,
 //! driven over IPC. Session state is saved like the TUI does; SIGINT /
 //! SIGTERM (Ctrl+C on Windows) save and exit cleanly.
 
@@ -48,7 +48,7 @@ fn error_logger() -> controller::Observer {
     let mut last = String::new();
     Box::new(move |app: &App| match &app.status {
         Status::Error(msg) if *msg != last => {
-            eprintln!("rustune: {msg}");
+            eprintln!("waimea: {msg}");
             last.clone_from(msg);
         }
         Status::Error(_) => {}
@@ -60,7 +60,7 @@ pub fn run(inputs: Vec<String>) -> Result<()> {
     let (config, config_warning) = Config::load();
     let (state, state_warning) = SessionState::load(&config::state_path());
     for warning in [config_warning, state_warning].into_iter().flatten() {
-        eprintln!("rustune: {warning}");
+        eprintln!("waimea: {warning}");
     }
     let rt = crate::runtime()?;
     let result = rt.block_on(async move {
@@ -78,7 +78,7 @@ pub fn run(inputs: Vec<String>) -> Result<()> {
             .extend(crate::mediactl::start(media_controls, tx));
         ctl.start_headless(inputs);
         eprintln!(
-            "rustune: daemon listening on {}",
+            "waimea: daemon listening on {}",
             server.endpoint().display()
         );
         controller::run_headless(&mut ctl, rx, shutdown_signal()).await;

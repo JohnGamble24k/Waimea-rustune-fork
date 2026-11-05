@@ -53,7 +53,7 @@ pub fn frames_at(d: Duration, rate: u32) -> u64 {
 pub fn spawn(track: Arc<Track>, out: OutFormat, emit: Emit) {
     let (t, e) = (track.clone(), emit.clone());
     let spawned = thread::Builder::new()
-        .name("rustune-decode".into())
+        .name("waimea-decode".into())
         .spawn(move || run(&t, out, &e));
     if let Err(err) = spawned {
         fail(&track, &emit, anyhow!("cannot start decoder thread: {err}"));
@@ -829,12 +829,12 @@ pub(crate) mod tests {
     }
 
     /// Decoder-path throughput: decode only, decode + remix/resample to a
-    /// 48 kHz device, and the conversion alone. Set `RUSTUNE_BENCH_MP3` to an
+    /// 48 kHz device, and the conversion alone. Set `WAIMEA_BENCH_MP3` to an
     /// MP3 to include it; a generated WAV is always measured.
     #[test]
     #[ignore = "benchmark: cargo test --release -- --ignored --nocapture bench_"]
     fn bench_decode_path() {
-        if let Ok(path) = std::env::var("RUSTUNE_BENCH_MP3") {
+        if let Ok(path) = std::env::var("WAIMEA_BENCH_MP3") {
             bench_one("mp3", &std::fs::read(&path).unwrap(), "mp3");
         }
         bench_one("wav", &wav_bytes(44_100, 2, 44_100 * 60, 440.0), "wav");

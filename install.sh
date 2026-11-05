@@ -1,19 +1,19 @@
 #!/bin/sh
-# rustune installer for macOS and Linux.
+# waimea installer for macOS and Linux.
 #
-#   curl -fsSL https://raw.githubusercontent.com/dzulfikar08/rustune/master/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/JohnGamble24k/Waimea/master/install.sh | sh
 #
 # Downloads the release binary for this OS and CPU, checks its SHA256 and
-# installs it as `rustune`. Settings (environment variables):
-#   RUSTUNE_INSTALL_DIR  where to install (default: ~/.local/bin)
-#   RUSTUNE_VERSION      release tag to install, e.g. v0.3.6 (default: latest)
-#   RUSTUNE_BASE_URL     folder holding the release files (mirrors, testing)
+# installs it as `waimea`. Settings (environment variables):
+#   WAIMEA_INSTALL_DIR  where to install (default: ~/.local/bin)
+#   WAIMEA_VERSION      release tag to install, e.g. v0.3.6 (default: latest)
+#   WAIMEA_BASE_URL     folder holding the release files (mirrors, testing)
 #   GITHUB_TOKEN         optional; only sent to api.github.com, which older
 #                        releases need for checksums (avoids its rate limit)
 
 set -eu
 
-REPO=dzulfikar08/rustune
+REPO=JohnGamble24k/Waimea
 
 say() { printf '%s\n' "$*"; }
 warn() { printf 'warning: %s\n' "$*" >&2; }
@@ -51,16 +51,16 @@ case $os in
     Darwin) os=macos ;;
     Linux) os=linux ;;
     MINGW* | MSYS* | CYGWIN* | Windows_NT)
-        die "on Windows use Scoop (scoop bucket add rustune https://github.com/dzulfikar08/scoop-bucket; scoop install rustune) or download rustune-x86_64-windows.exe from https://github.com/$REPO/releases"
+        die "on Windows download waimea-x86_64-windows.exe from https://github.com/$REPO/releases"
         ;;
-    *) die "no prebuilt rustune for $os; build it with: cargo install --git https://github.com/$REPO" ;;
+    *) die "no prebuilt waimea for $os; build it with: cargo install --git https://github.com/$REPO" ;;
 esac
 
 arch=$(uname -m)
 case $arch in
     x86_64 | amd64) arch=x86_64 ;;
     arm64 | aarch64) arch=aarch64 ;;
-    *) die "no prebuilt rustune for $arch; build it with: cargo install --git https://github.com/$REPO" ;;
+    *) die "no prebuilt waimea for $arch; build it with: cargo install --git https://github.com/$REPO" ;;
 esac
 # A shell running under Rosetta reports x86_64 on Apple silicon.
 if [ "$os" = macos ] && [ "$arch" = x86_64 ] && [ "$(sysctl -n sysctl.proc_translated 2>/dev/null || true)" = 1 ]; then
@@ -70,32 +70,32 @@ if [ "$os" = linux ] && ldd --version 2>&1 | grep -qi musl; then
     die "the Linux build needs glibc; on musl systems build it with: cargo install --git https://github.com/$REPO"
 fi
 
-asset="rustune-$arch-$os"
-if [ -n "${RUSTUNE_BASE_URL:-}" ]; then
-    base=${RUSTUNE_BASE_URL%/}
-elif [ -n "${RUSTUNE_VERSION:-}" ]; then
-    base="https://github.com/$REPO/releases/download/$RUSTUNE_VERSION"
+asset="waimea-$arch-$os"
+if [ -n "${WAIMEA_BASE_URL:-}" ]; then
+    base=${WAIMEA_BASE_URL%/}
+elif [ -n "${WAIMEA_VERSION:-}" ]; then
+    base="https://github.com/$REPO/releases/download/$WAIMEA_VERSION"
 else
     base="https://github.com/$REPO/releases/latest/download"
 fi
-dir=${RUSTUNE_INSTALL_DIR:-$HOME/.local/bin}
+dir=${WAIMEA_INSTALL_DIR:-$HOME/.local/bin}
 
-tmp=$(mktemp -d 2>/dev/null || mktemp -d -t rustune)
+tmp=$(mktemp -d 2>/dev/null || mktemp -d -t waimea)
 trap 'rm -rf "$tmp"' EXIT
 trap 'exit 130' INT TERM
 
 say "Downloading $base/$asset"
-download "$base/$asset" "$tmp/rustune" || die "download failed: $base/$asset"
+download "$base/$asset" "$tmp/waimea" || die "download failed: $base/$asset"
 
 expected=""
 if download "$base/SHA256SUMS" "$tmp/SHA256SUMS" 2>/dev/null; then
     expected=$(awk -v f="$asset" '$2 == f || $2 == "*" f { print $1; exit }' "$tmp/SHA256SUMS")
     [ -n "$expected" ] || die "$asset is not listed in $base/SHA256SUMS"
-elif [ -z "${RUSTUNE_BASE_URL:-}" ]; then
+elif [ -z "${WAIMEA_BASE_URL:-}" ]; then
     # Releases up to v0.3.6 have no SHA256SUMS: ask the GitHub API, which
     # records a sha256 digest for every release file.
-    if [ -n "${RUSTUNE_VERSION:-}" ]; then
-        api="https://api.github.com/repos/$REPO/releases/tags/$RUSTUNE_VERSION"
+    if [ -n "${WAIMEA_VERSION:-}" ]; then
+        api="https://api.github.com/repos/$REPO/releases/tags/$WAIMEA_VERSION"
     else
         api="https://api.github.com/repos/$REPO/releases/latest"
     fi
@@ -107,7 +107,7 @@ elif [ -z "${RUSTUNE_BASE_URL:-}" ]; then
 fi
 [ -n "$expected" ] || die "no SHA256 checksum published for $asset; refusing to install"
 
-actual=$(sha256 "$tmp/rustune")
+actual=$(sha256 "$tmp/waimea")
 expected=$(printf '%s' "$expected" | tr 'A-F' 'a-f')
 if [ "$actual" != "$expected" ]; then
     die "checksum mismatch for $asset (expected $expected, got $actual)"
@@ -115,18 +115,18 @@ fi
 say "Checksum OK ($actual)"
 
 mkdir -p "$dir"
-chmod 755 "$tmp/rustune"
-mv -f "$tmp/rustune" "$dir/rustune"
-say "Installed $dir/rustune"
+chmod 755 "$tmp/waimea"
+mv -f "$tmp/waimea" "$dir/waimea"
+say "Installed $dir/waimea"
 
-if version=$("$dir/rustune" --version 2>/dev/null); then
+if version=$("$dir/waimea" --version 2>/dev/null); then
     say "$version is ready."
 elif [ "$os" = linux ]; then
-    warn "rustune could not start. It needs the ALSA library (libasound.so.2):"
+    warn "waimea could not start. It needs the ALSA library (libasound.so.2):"
     warn "  Debian/Ubuntu: sudo apt install libasound2 (libasound2t64 on Ubuntu 24.04 and later)"
     warn "  Fedora: sudo dnf install alsa-lib    Arch: sudo pacman -S alsa-lib"
 else
-    warn "rustune was installed but could not start"
+    warn "waimea was installed but could not start"
 fi
 
 case ":$PATH:" in
@@ -138,4 +138,4 @@ case ":$PATH:" in
 esac
 
 say "Optional: install yt-dlp (online search and streaming) and ffmpeg (exotic formats, HLS)."
-say "Run 'rustune doctor' to check audio output and optional tools."
+say "Run 'waimea doctor' to check audio output and optional tools."

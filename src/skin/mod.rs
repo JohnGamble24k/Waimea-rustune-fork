@@ -521,7 +521,7 @@ pub(crate) mod tests {
 
     #[test]
     fn peek_metadata_strips_directory_prefixes() {
-        let dir = std::env::temp_dir().join(format!("rustune-peek-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("waimea-peek-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("Some Skin.wsz");
         let wsz = build_wsz(&[("Some Skin/genex.ini", b"[x]\nname=Peeked\n".to_vec())]);

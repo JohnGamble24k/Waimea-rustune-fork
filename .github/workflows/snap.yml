@@ -34,19 +34,19 @@ jobs:
         run: |
           ls -l ${{ steps.build.outputs.snap }}
           sudo snap install --dangerous ${{ steps.build.outputs.snap }}
-          snap connections rustune
-          grep -A8 '^apps:' /snap/rustune/current/meta/snap.yaml
+          snap connections waimea
+          grep -A8 '^apps:' /snap/waimea/current/meta/snap.yaml
           # Every library the binary and the PulseAudio plugin need must
           # resolve inside the snap (or its core24 base).
-          snap run --shell rustune -c 'ldd "$SNAP/bin/rustune" "$SNAP"/usr/lib/*/alsa-lib/*.so "$SNAP"/usr/lib/*/libpulse.so.0' | tee ldd.txt
+          snap run --shell waimea -c 'ldd "$SNAP/bin/waimea" "$SNAP"/usr/lib/*/alsa-lib/*.so "$SNAP"/usr/lib/*/libpulse.so.0' | tee ldd.txt
           ! grep 'not found' ldd.txt
-      - name: rustune --version / --help / doctor
+      - name: waimea --version / --help / doctor
         run: |
           version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n1)
-          out=$(rustune --version)
+          out=$(waimea --version)
           echo "$out"
-          test "$out" = "rustune $version"
-          rustune --help > help.txt && grep -q USAGE help.txt
+          test "$out" = "waimea $version"
+          waimea --help > help.txt && grep -q USAGE help.txt
 
       - name: Play a tone through PulseAudio
         run: |
@@ -61,14 +61,14 @@ jobs:
           pactl set-default-sink ci
           pactl info
 
-          rustune doctor | tee doctor.txt
+          waimea doctor | tee doctor.txt
           grep -q '\[ok\] audio output' doctor.txt
 
           # The home plug covers non-hidden files in $HOME; the snap's own
-          # config lives under ~/snap/rustune/current.
-          mkdir -p "$HOME/snap-test" "$HOME/snap/rustune/current/.config/rustune"
+          # config lives under ~/snap/waimea/current.
+          mkdir -p "$HOME/snap-test" "$HOME/snap/waimea/current/.config/waimea"
           printf 'onboarding_done = true\nmusic_dir = "%s"\n' "$HOME/snap-test" \
-            > "$HOME/snap/rustune/current/.config/rustune/config.toml"
+            > "$HOME/snap/waimea/current/.config/waimea/config.toml"
           python3 - "$HOME/snap-test/tone.wav" <<'EOF'
           import fcntl, math, os, struct, subprocess, sys, termios, threading, time, wave
 
@@ -87,7 +87,7 @@ jobs:
           master, slave = os.openpty()
           fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 40, 120, 0, 0))
           env = dict(os.environ, TERM="xterm-256color")
-          proc = subprocess.Popen(["rustune", wav], stdin=slave, stdout=slave, stderr=slave,
+          proc = subprocess.Popen(["waimea", wav], stdin=slave, stdout=slave, stderr=slave,
                                   env=env, start_new_session=True)
           os.close(slave)
           out = bytearray()
@@ -117,8 +117,8 @@ jobs:
               proc.kill()
           if not inputs:
               print(bytes(out[-4096:]).decode("utf-8", errors="replace"))
-              sys.exit("rustune did not open a PulseAudio stream")
-          print("rustune played through PulseAudio")
+              sys.exit("waimea did not open a PulseAudio stream")
+          print("waimea played through PulseAudio")
           EOF
 
       - uses: actions/upload-artifact@v4

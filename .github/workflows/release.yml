@@ -24,9 +24,9 @@ jobs:
       - id: version
         name: Read the version from Cargo.toml
         run: |
-          version=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "rustune") | .version')
+          version=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "waimea") | .version')
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "rustune $version"
+          echo "waimea $version"
           if [ "$GITHUB_EVENT_NAME" = push ] && [ "$GITHUB_REF_NAME" != "v$version" ]; then
             echo "::error::tag $GITHUB_REF_NAME does not match Cargo.toml version $version"
             exit 1
@@ -41,26 +41,26 @@ jobs:
         include:
           - os: macos-latest
             target: aarch64-apple-darwin
-            artifact: rustune-aarch64-macos
-            dmg_artifact: rustune-aarch64-macos.dmg
+            artifact: waimea-aarch64-macos
+            dmg_artifact: waimea-aarch64-macos.dmg
           - os: macos-latest
             target: x86_64-apple-darwin
-            artifact: rustune-x86_64-macos
-            dmg_artifact: rustune-x86_64-macos.dmg
+            artifact: waimea-x86_64-macos
+            dmg_artifact: waimea-x86_64-macos.dmg
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            artifact: rustune-x86_64-windows.exe
+            artifact: waimea-x86_64-windows.exe
             dmg_artifact: ""
           # Linux builds link against Ubuntu 22.04's glibc 2.35 so they run
           # on Debian 12 and other older distributions (24.04 pulls in a
           # GLIBC_2.39 reference that older aarch64 loaders reject).
           - os: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
-            artifact: rustune-x86_64-linux
+            artifact: waimea-x86_64-linux
             dmg_artifact: ""
           - os: ubuntu-22.04-arm
             target: aarch64-unknown-linux-gnu
-            artifact: rustune-aarch64-linux
+            artifact: waimea-aarch64-linux
             dmg_artifact: ""
 
     steps:
@@ -81,7 +81,7 @@ jobs:
         if: runner.os != 'macOS'
         shell: bash
         run: |
-          src=target/${{ matrix.target }}/release/rustune
+          src=target/${{ matrix.target }}/release/waimea
           if [ "$RUNNER_OS" = Windows ]; then src="$src.exe"; fi
           cp "$src" ${{ matrix.artifact }}
           chmod +x ${{ matrix.artifact }}
@@ -121,7 +121,7 @@ jobs:
         if: runner.os == 'Linux'
         uses: actions/upload-artifact@v4
         with:
-          name: rustune-packages-${{ matrix.target }}
+          name: waimea-packages-${{ matrix.target }}
           path: dist/*
           if-no-files-found: error
 
@@ -147,7 +147,7 @@ jobs:
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          cp target/${{ matrix.target }}/release/rustune ${{ matrix.artifact }}
+          cp target/${{ matrix.target }}/release/waimea ${{ matrix.artifact }}
           codesign --force --options runtime \
             -s "Developer ID Application: Dzulfikar Ats Tsauri (${APPLE_TEAM_ID})" \
             --timestamp \
@@ -157,39 +157,39 @@ jobs:
         if: matrix.os == 'macos-latest'
         run: |
           brew install librsvg
-          mkdir -p /tmp/rustune.iconset
+          mkdir -p /tmp/waimea.iconset
           for size in 16 32 64 128 256 512; do
-            rsvg-convert -w $size -h $size assets/macos/icon.svg -o /tmp/rustune.iconset/icon_${size}x${size}.png
+            rsvg-convert -w $size -h $size assets/macos/icon.svg -o /tmp/waimea.iconset/icon_${size}x${size}.png
           done
-          rsvg-convert -w 32 -h 32 assets/macos/icon.svg -o /tmp/rustune.iconset/icon_16x16@2x.png
-          rsvg-convert -w 64 -h 64 assets/macos/icon.svg -o /tmp/rustune.iconset/icon_32x32@2x.png
-          rsvg-convert -w 128 -h 128 assets/macos/icon.svg -o /tmp/rustune.iconset/icon_64x64@2x.png
-          rsvg-convert -w 256 -h 256 assets/macos/icon.svg -o /tmp/rustune.iconset/icon_128x128@2x.png
-          rsvg-convert -w 512 -h 512 assets/macos/icon.svg -o /tmp/rustune.iconset/icon_256x256@2x.png
-          rsvg-convert -w 1024 -h 1024 assets/macos/icon.svg -o /tmp/rustune.iconset/icon_512x512@2x.png
-          iconutil -c icns /tmp/rustune.iconset -o assets/macos/AppIcon.icns
+          rsvg-convert -w 32 -h 32 assets/macos/icon.svg -o /tmp/waimea.iconset/icon_16x16@2x.png
+          rsvg-convert -w 64 -h 64 assets/macos/icon.svg -o /tmp/waimea.iconset/icon_32x32@2x.png
+          rsvg-convert -w 128 -h 128 assets/macos/icon.svg -o /tmp/waimea.iconset/icon_64x64@2x.png
+          rsvg-convert -w 256 -h 256 assets/macos/icon.svg -o /tmp/waimea.iconset/icon_128x128@2x.png
+          rsvg-convert -w 512 -h 512 assets/macos/icon.svg -o /tmp/waimea.iconset/icon_256x256@2x.png
+          rsvg-convert -w 1024 -h 1024 assets/macos/icon.svg -o /tmp/waimea.iconset/icon_512x512@2x.png
+          iconutil -c icns /tmp/waimea.iconset -o assets/macos/AppIcon.icns
 
       - name: Create .app bundle + .dmg (macOS)
         if: matrix.os == 'macos-latest'
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          APPDIR="rustune.app/Contents"
+          APPDIR="waimea.app/Contents"
           mkdir -p "$APPDIR/MacOS" "$APPDIR/Resources"
 
           # Copy binary
-          cp target/${{ matrix.target }}/release/rustune "$APPDIR/MacOS/rustune-bin"
+          cp target/${{ matrix.target }}/release/waimea "$APPDIR/MacOS/waimea-bin"
 
           # Create launcher script
-          cat > "$APPDIR/MacOS/rustune-launcher" << 'LAUNCHER'
+          cat > "$APPDIR/MacOS/waimea-launcher" << 'LAUNCHER'
           #!/bin/bash
           DIR="$(cd "$(dirname "$0")" && pwd)"
           exec osascript -e "tell application \"Terminal\"
               activate
-              do script \"clear && '$DIR/rustune-bin'; exit\"
+              do script \"clear && '$DIR/waimea-bin'; exit\"
           end tell"
           LAUNCHER
-          chmod +x "$APPDIR/MacOS/rustune-launcher"
+          chmod +x "$APPDIR/MacOS/waimea-launcher"
 
           # Copy Info.plist and icon
           cp assets/macos/Info.plist "$APPDIR/Info.plist"
@@ -199,12 +199,12 @@ jobs:
           codesign --force --options runtime \
             -s "Developer ID Application: Dzulfikar Ats Tsauri (${APPLE_TEAM_ID})" \
             --timestamp \
-            "$APPDIR/MacOS/rustune-bin"
+            "$APPDIR/MacOS/waimea-bin"
 
           codesign --force --options runtime \
             -s "Developer ID Application: Dzulfikar Ats Tsauri (${APPLE_TEAM_ID})" \
             --timestamp \
-            "$APPDIR/MacOS/rustune-launcher"
+            "$APPDIR/MacOS/waimea-launcher"
 
           # Write entitlements
           cat > /tmp/entitlements.plist << 'PLIST'
@@ -218,11 +218,11 @@ jobs:
             -s "Developer ID Application: Dzulfikar Ats Tsauri (${APPLE_TEAM_ID})" \
             --timestamp \
             --entitlements /tmp/entitlements.plist \
-            rustune.app
+            waimea.app
 
           # Create .dmg
-          hdiutil create -volname "rustune" \
-            -srcfolder rustune.app \
+          hdiutil create -volname "waimea" \
+            -srcfolder waimea.app \
             -ov -format UDZO \
             ${{ matrix.dmg_artifact }}
 
@@ -249,10 +249,10 @@ jobs:
     strategy:
       matrix:
         include:
-          - artifact: rustune-aarch64-macos
-            dmg_artifact: rustune-aarch64-macos.dmg
-          - artifact: rustune-x86_64-macos
-            dmg_artifact: rustune-x86_64-macos.dmg
+          - artifact: waimea-aarch64-macos
+            dmg_artifact: waimea-aarch64-macos.dmg
+          - artifact: waimea-x86_64-macos
+            dmg_artifact: waimea-x86_64-macos.dmg
     steps:
       # --- Notarize bare binary ---
       - uses: actions/download-artifact@v4
@@ -308,8 +308,8 @@ jobs:
           if-no-files-found: error
 
   # Per-target archives for cargo-binstall and manual installs:
-  # rustune-<version>-<target>.tar.gz (.zip on Windows) holding
-  # rustune-<version>-<target>/{rustune, README.md, LICENSE}. Built from the
+  # waimea-<version>-<target>.tar.gz (.zip on Windows) holding
+  # waimea-<version>-<target>/{waimea, README.md, LICENSE}. Built from the
   # notarized macOS binaries.
   archive:
     name: Archives
@@ -321,18 +321,18 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          pattern: rustune-*
+          pattern: waimea-*
           path: bin
           merge-multiple: true
       - name: Pack
         run: |
           mkdir -p stage out
           pack() { # asset target
-            dir="rustune-$VERSION-$2"
+            dir="waimea-$VERSION-$2"
             exe=""
             case $2 in *windows*) exe=.exe ;; esac
             mkdir -p "stage/$dir"
-            install -m 755 "bin/$1" "stage/$dir/rustune$exe"
+            install -m 755 "bin/$1" "stage/$dir/waimea$exe"
             install -m 644 README.md LICENSE "stage/$dir/"
             if [ -n "$exe" ]; then
               (cd stage && zip -9 -r -X "../out/$dir.zip" "$dir")
@@ -340,24 +340,24 @@ jobs:
               tar -C stage --owner=0 --group=0 --numeric-owner -czf "out/$dir.tar.gz" "$dir"
             fi
           }
-          pack rustune-aarch64-macos aarch64-apple-darwin
-          pack rustune-x86_64-macos x86_64-apple-darwin
-          pack rustune-x86_64-linux x86_64-unknown-linux-gnu
-          pack rustune-aarch64-linux aarch64-unknown-linux-gnu
-          pack rustune-x86_64-windows.exe x86_64-pc-windows-msvc
+          pack waimea-aarch64-macos aarch64-apple-darwin
+          pack waimea-x86_64-macos x86_64-apple-darwin
+          pack waimea-x86_64-linux x86_64-unknown-linux-gnu
+          pack waimea-aarch64-linux aarch64-unknown-linux-gnu
+          pack waimea-x86_64-windows.exe x86_64-pc-windows-msvc
           ls -l out
       # The archives must match [package.metadata.binstall] in Cargo.toml.
       - name: Check the cargo-binstall layout
         run: |
-          meta=$(cargo metadata --no-deps --format-version 1 | jq '.packages[] | select(.name == "rustune") | .metadata.binstall')
+          meta=$(cargo metadata --no-deps --format-version 1 | jq '.packages[] | select(.name == "waimea") | .metadata.binstall')
           for target in aarch64-apple-darwin x86_64-apple-darwin x86_64-unknown-linux-gnu \
                         aarch64-unknown-linux-gnu x86_64-pc-windows-msvc; do
             ext="" suffix=.tar.gz
             case $target in *windows*) ext=.exe suffix=.zip ;; esac
             render() {
-              sed -e "s/{ name }/rustune/g; s/{ version }/$VERSION/g; s/{ target }/$target/g" \
-                  -e "s/{ bin }/rustune/g; s/{ binary-ext }/$ext/g; s/{ archive-suffix }/$suffix/g" \
-                  -e 's/{ repo }/https:\/\/github.com\/dzulfikar08\/rustune/g'
+              sed -e "s/{ name }/waimea/g; s/{ version }/$VERSION/g; s/{ target }/$target/g" \
+                  -e "s/{ bin }/waimea/g; s/{ binary-ext }/$ext/g; s/{ archive-suffix }/$suffix/g" \
+                  -e 's/{ repo }/https:\/\/github.com\/JohnGamble24k\/Waimea/g'
             }
             url=$(jq -r '."pkg-url"' <<<"$meta" | render)
             bin=$(jq -r '."bin-dir"' <<<"$meta" | render)
@@ -369,7 +369,7 @@ jobs:
           done
       - uses: actions/upload-artifact@v4
         with:
-          name: rustune-archives
+          name: waimea-archives
           path: out/*
           if-no-files-found: error
 
@@ -402,7 +402,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: rustune-packages-${{ matrix.target }}
+          name: waimea-packages-${{ matrix.target }}
           path: pkg
       # Container images skip docs on install (dpkg path-exclude, dnf
       # nodocs), so the README is checked in the package listing.
@@ -411,8 +411,8 @@ jobs:
         run: |
           dpkg-deb --field pkg/*.deb Package Version Architecture Depends Recommends
           dpkg-deb --contents pkg/*.deb | tee contents.txt
-          grep -q ' ./usr/bin/rustune$' contents.txt
-          grep -q ' ./usr/share/doc/rustune/README.md$' contents.txt
+          grep -q ' ./usr/bin/waimea$' contents.txt
+          grep -q ' ./usr/share/doc/waimea/README.md$' contents.txt
           apt-get update
           apt-get install -y --no-install-recommends ./pkg/*.deb
       - name: Install the .rpm
@@ -420,22 +420,22 @@ jobs:
         run: |
           rpm -qp --requires --recommends pkg/*.rpm
           rpm -qlp pkg/*.rpm | tee contents.txt
-          grep -qx /usr/bin/rustune contents.txt
-          grep -qx /usr/share/doc/rustune/README.md contents.txt
+          grep -qx /usr/bin/waimea contents.txt
+          grep -qx /usr/share/doc/waimea/README.md contents.txt
           dnf install -y ./pkg/*.rpm
-      - name: Run rustune
+      - name: Run waimea
         shell: bash
         run: |
-          command -v rustune
-          out=$(rustune --version)
+          command -v waimea
+          out=$(waimea --version)
           echo "$out"
-          test "$out" = "rustune $VERSION"
-          rustune --help > help.txt && grep -q USAGE help.txt
+          test "$out" = "waimea $VERSION"
+          waimea --help > help.txt && grep -q USAGE help.txt
       - name: Uninstall
         shell: bash
         run: |
-          if [ "${{ matrix.kind }}" = deb ]; then apt-get remove -y rustune; else dnf remove -y rustune; fi
-          ! command -v rustune
+          if [ "${{ matrix.kind }}" = deb ]; then apt-get remove -y waimea; else dnf remove -y waimea; fi
+          ! command -v waimea
 
   checksums:
     name: SHA256SUMS
@@ -447,21 +447,21 @@ jobs:
       # All release files land side by side in artifacts/.
       - uses: actions/download-artifact@v4
         with:
-          pattern: rustune-*
+          pattern: waimea-*
           path: artifacts
           merge-multiple: true
       - name: Check release files
         run: |
           ls -l artifacts
           missing=0
-          for f in rustune-aarch64-macos rustune-aarch64-macos.dmg \
-                   rustune-x86_64-macos rustune-x86_64-macos.dmg \
-                   rustune-x86_64-linux rustune-aarch64-linux rustune-x86_64-windows.exe \
-                   rustune-$VERSION-aarch64-apple-darwin.tar.gz rustune-$VERSION-x86_64-apple-darwin.tar.gz \
-                   rustune-$VERSION-x86_64-unknown-linux-gnu.tar.gz rustune-$VERSION-aarch64-unknown-linux-gnu.tar.gz \
-                   rustune-$VERSION-x86_64-pc-windows-msvc.zip \
-                   rustune_${VERSION}-1_amd64.deb rustune_${VERSION}-1_arm64.deb \
-                   rustune-${VERSION}-1.x86_64.rpm rustune-${VERSION}-1.aarch64.rpm; do
+          for f in waimea-aarch64-macos waimea-aarch64-macos.dmg \
+                   waimea-x86_64-macos waimea-x86_64-macos.dmg \
+                   waimea-x86_64-linux waimea-aarch64-linux waimea-x86_64-windows.exe \
+                   waimea-$VERSION-aarch64-apple-darwin.tar.gz waimea-$VERSION-x86_64-apple-darwin.tar.gz \
+                   waimea-$VERSION-x86_64-unknown-linux-gnu.tar.gz waimea-$VERSION-aarch64-unknown-linux-gnu.tar.gz \
+                   waimea-$VERSION-x86_64-pc-windows-msvc.zip \
+                   waimea_${VERSION}-1_amd64.deb waimea_${VERSION}-1_arm64.deb \
+                   waimea-${VERSION}-1.x86_64.rpm waimea-${VERSION}-1.aarch64.rpm; do
             test -s "artifacts/$f" || { echo "::error::missing release file $f"; missing=1; }
           done
           exit $missing
@@ -472,7 +472,7 @@ jobs:
           cat SHA256SUMS
       - uses: actions/upload-artifact@v4
         with:
-          name: rustune-SHA256SUMS
+          name: waimea-SHA256SUMS
           path: artifacts/SHA256SUMS
           if-no-files-found: error
 
@@ -491,7 +491,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          pattern: rustune-*
+          pattern: waimea-*
           path: rel
           merge-multiple: true
       - if: runner.os == 'Linux'
@@ -510,15 +510,15 @@ jobs:
           if command -v dash >/dev/null; then shells="sh dash"; fi
           for shell in $shells; do
             dir="$RUNNER_TEMP/$shell/bin"
-            RUSTUNE_BASE_URL=http://127.0.0.1:8765 RUSTUNE_INSTALL_DIR="$dir" $shell install.sh
-            test "$("$dir/rustune" --version)" = "rustune $VERSION"
+            WAIMEA_BASE_URL=http://127.0.0.1:8765 WAIMEA_INSTALL_DIR="$dir" $shell install.sh
+            test "$("$dir/waimea" --version)" = "waimea $VERSION"
           done
 
-          if RUSTUNE_BASE_URL=http://127.0.0.1:8766 RUSTUNE_INSTALL_DIR="$RUNNER_TEMP/bad/bin" sh install.sh; then
+          if WAIMEA_BASE_URL=http://127.0.0.1:8766 WAIMEA_INSTALL_DIR="$RUNNER_TEMP/bad/bin" sh install.sh; then
             echo "::error::install.sh accepted a binary with a wrong checksum"
             exit 1
           fi
-          test ! -e "$RUNNER_TEMP/bad/bin/rustune"
+          test ! -e "$RUNNER_TEMP/bad/bin/waimea"
 
   snap:
     name: Snap
@@ -531,12 +531,12 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          pattern: rustune-*
+          pattern: waimea-*
           path: artifacts
           merge-multiple: true
 
       - name: Ensure binaries are executable
-        run: find artifacts -type f -name 'rustune-*-*' ! -name '*.*' -exec chmod +x {} +
+        run: find artifacts -type f -name 'waimea-*-*' ! -name '*.*' -exec chmod +x {} +
 
       - name: Verify checksums
         working-directory: artifacts
@@ -563,7 +563,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        pkg: [rustune-bin, rustune]
+        pkg: [waimea-bin, waimea]
     env:
       AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
       VERSION: ${{ needs.meta.outputs.version }}
@@ -583,8 +583,8 @@ jobs:
           pkgname: ${{ matrix.pkg }}
           pkgbuild: packaging/aur/${{ matrix.pkg }}/PKGBUILD
           updpkgsums: true
-          commit_username: dzulfikar08
-          commit_email: 99225357+dzulfikar08@users.noreply.github.com
+          commit_username: JohnGamble24k
+          commit_email: JohnGamble24k@users.noreply.github.com
           ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
           commit_message: Update to ${{ needs.meta.outputs.version }}
 
@@ -634,25 +634,3 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev
       - if: env.CARGO_REGISTRY_TOKEN != ''
         run: cargo publish --locked
-
-  # Needs the first version merged into microsoft/winget-pkgs by hand
-  # (packaging/README.md); later versions are submitted from here.
-  publish-winget:
-    name: Publish winget
-    needs: [meta, release]
-    if: github.event_name == 'push'
-    runs-on: windows-latest
-    env:
-      WINGET_GITHUB_TOKEN: ${{ secrets.WINGET_GITHUB_TOKEN }}
-      VERSION: ${{ needs.meta.outputs.version }}
-    steps:
-      - if: env.WINGET_GITHUB_TOKEN == ''
-        run: echo "::notice::WINGET_GITHUB_TOKEN is not set; skipping winget"
-      - if: env.WINGET_GITHUB_TOKEN != ''
-        run: |
-          Invoke-WebRequest https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
-          .\wingetcreate.exe update dzulfikar08.rustune `
-            --version $env:VERSION `
-            --urls "https://github.com/dzulfikar08/rustune/releases/download/v$env:VERSION/rustune-x86_64-windows.exe" `
-            --token $env:WINGET_GITHUB_TOKEN `
-            --submit

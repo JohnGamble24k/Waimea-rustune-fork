@@ -96,7 +96,7 @@ def make_wav(path, freq, secs=20, rate=22050):
 
 def home_for(theme, music):
     home = tempfile.mkdtemp(prefix="home-")
-    conf = os.path.join(home, ".config", "rustune")
+    conf = os.path.join(home, ".config", "waimea")
     os.makedirs(os.path.join(conf, "skins"))
     shutil.copy(SKIN, os.path.join(conf, "skins", "base-2.91.wsz"))
     with open(os.path.join(conf, "config.toml"), "w") as f:

@@ -24,7 +24,7 @@ use crate::command::Command;
 use crate::event::AppEvent;
 use crate::view::{PlayStatus, RepeatMode};
 
-pub const BUS_NAME: &str = "org.mpris.MediaPlayer2.rustune";
+pub const BUS_NAME: &str = "org.mpris.MediaPlayer2.waimea";
 pub const OBJECT_PATH: &str = "/org/mpris/MediaPlayer2";
 const ROOT_IFACE: &str = "org.mpris.MediaPlayer2";
 const PLAYER_IFACE: &str = "org.mpris.MediaPlayer2.Player";
@@ -32,7 +32,7 @@ const PROPS_IFACE: &str = "org.freedesktop.DBus.Properties";
 const INTROSPECT_IFACE: &str = "org.freedesktop.DBus.Introspectable";
 const PEER_IFACE: &str = "org.freedesktop.DBus.Peer";
 pub const NO_TRACK: &str = "/org/mpris/MediaPlayer2/TrackList/NoTrack";
-const TRACK_PREFIX: &str = "/org/mpris/MediaPlayer2/rustune/track/";
+const TRACK_PREFIX: &str = "/org/mpris/MediaPlayer2/waimea/track/";
 /// Setup (connect, auth, Hello, RequestName) must not hang the thread.
 const SETUP_TIMEOUT: Duration = Duration::from_secs(5);
 
@@ -251,7 +251,7 @@ fn root_property(name: &str) -> Option<Value> {
     Some(match name {
         "CanQuit" => Value::Bool(true),
         "CanRaise" | "HasTrackList" => Value::Bool(false),
-        "Identity" => Value::Str("rustune".into()),
+        "Identity" => Value::Str("Waimea".into()),
         "SupportedUriSchemes" | "SupportedMimeTypes" => Value::strings(Vec::new()),
         _ => return None,
     })
@@ -570,7 +570,7 @@ impl Mpris {
         let thread_shared = Arc::clone(&shared);
         let thread_out = out.clone();
         std::thread::Builder::new()
-            .name("rustune-mpris".into())
+            .name("waimea-mpris".into())
             .spawn(move || {
                 // Failures leave media controls off; stderr belongs to the TUI.
                 let _ = serve(&thread_shared, thread_out, out_rx, &tx);
@@ -614,7 +614,7 @@ impl Drop for Mpris {
     }
 }
 
-/// Own `BUS_NAME`, or a per-process instance name when another rustune
+/// Own `BUS_NAME`, or a per-process instance name when another waimea
 /// already has it (MPRIS convention).
 fn acquire_name(bus: &mut Bus) -> io::Result<()> {
     if bus.request_name(BUS_NAME)? {
@@ -646,7 +646,7 @@ fn serve(
         return Ok(()); // the player already went away
     }
     std::thread::Builder::new()
-        .name("rustune-mpris-tx".into())
+        .name("waimea-mpris-tx".into())
         .spawn(move || {
             let mut stream = stream;
             for msg in out_rx {
@@ -676,7 +676,7 @@ fn serve(
     }
 }
 
-/// One line for `rustune doctor`.
+/// One line for `waimea doctor`.
 pub fn doctor() -> String {
     match Bus::connect_session(Duration::from_secs(2)) {
         Ok(_) => format!("[ok] media controls: MPRIS ({BUS_NAME} on the D-Bus session bus)"),
@@ -822,7 +822,7 @@ mod tests {
             vec![Value::Str(ROOT_IFACE.into()), Value::Str("Identity".into())],
         );
         let reply = handle(&m, &p, now).reply.expect("reply");
-        assert_eq!(reply.body[0].inner(), &Value::Str("rustune".into()));
+        assert_eq!(reply.body[0].inner(), &Value::Str("Waimea".into()));
 
         let m = call(
             PROPS_IFACE,

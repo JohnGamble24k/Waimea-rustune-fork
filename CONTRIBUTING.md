@@ -1,13 +1,13 @@
-# Contributing to rustune
+# Contributing to waimea
 
 Thanks for your interest in contributing! This guide covers how to report bugs, suggest features, and submit code.
 
 ## Reporting Bugs
 
-1. Check [existing issues](https://github.com/dzulfikar08/rustune/issues) to avoid duplicates
+1. Check [existing issues](https://github.com/JohnGamble24k/Waimea/issues) to avoid duplicates
 2. Open a new issue with:
    - **OS and version** (macOS, Linux, Windows)
-   - **rustune version** (or commit hash)
+   - **waimea version** (or commit hash)
    - **yt-dlp and ffmpeg versions** (if used)
    - Steps to reproduce
    - Expected vs actual behavior
@@ -27,8 +27,8 @@ Open an issue with the label `enhancement`. Describe the feature and why it woul
 ### Build and Run
 
 ```bash
-git clone https://github.com/dzulfikar08/rustune.git
-cd rustune
+git clone https://github.com/JohnGamble24k/Waimea.git
+cd Waimea
 cargo run
 ```
 

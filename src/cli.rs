@@ -74,11 +74,11 @@ pub fn help_text(program: &str) -> String {
     let mut keys = String::new();
     crate::keymap::write_help(&mut keys);
     format!(
-        "rustune {version}: terminal music player
+        "Waimea {version}: terminal music player. Platform-agnostic, agent-ready.
 
 USAGE:
     {program} [FILE|DIR|URL|PLAYLIST]...   Play the given items (or open the library);
-                                           queued instead if rustune already runs
+                                           queued instead if waimea already runs
     {program} --daemon [ITEM]...           Run headless, controlled by the commands below
     {program} doctor                       Check audio output, optional tools and paths
     {program} --help | --version
@@ -151,7 +151,7 @@ FILES:
 The control socket speaks newline-delimited JSON: {{\"cmd\":\"next\"}},
 {{\"cmd\":\"set_volume\",\"arg\":0.5}}, {{\"get\":\"status|queue|lyrics|screen\"}},
 {{\"keys\":[\"j\"]}}, {{\"search\":{{...}}}}, {{\"skin\":\"...\"}}, {{\"subscribe\":true}}.
-Set RUSTUNE_SOCKET to use another socket path.
+Set WAIMEA_SOCKET to use another socket path.
 
 Playback is built in (no mpv). Optional tools: yt-dlp (online search and
 downloads), ffmpeg (opus/wma and HLS streams). Run '{program} doctor'.
@@ -163,7 +163,7 @@ MEDIA KEYS:
     on Windows.
 
 MORE:
-    https://rustune.dzulfikar.com",
+    https://github.com/JohnGamble24k/Waimea",
         version = env!("CARGO_PKG_VERSION"),
         config = config::Config::path().display(),
         state = config::state_path().display(),
@@ -184,10 +184,10 @@ fn output_device() -> Option<String> {
     )
 }
 
-/// `rustune doctor`: report the audio output, optional tools and paths.
+/// `waimea doctor`: report the audio output, optional tools and paths.
 /// Never fails; every external tool is optional.
 pub async fn doctor() {
-    println!("rustune {} doctor\n", env!("CARGO_PKG_VERSION"));
+    println!("waimea {} doctor\n", env!("CARGO_PKG_VERSION"));
     match output_device() {
         Some(name) => println!("  [ok] audio output: {name}"),
         None => println!("  [!!] audio output: no default output device found"),
@@ -229,7 +229,7 @@ pub async fn doctor() {
     println!("  [ok] sources: {}", sources.join(", "));
     println!("  {}", crate::mediactl::doctor(cfg.media_controls));
 
-    println!("\nPlayback needs no external tools. Run 'rustune' to start.");
+    println!("\nPlayback needs no external tools. Run 'waimea' to start.");
 }
 
 /// Expand positional arguments into queue items (blocking: walks
@@ -351,7 +351,7 @@ mod tests {
 
     #[test]
     fn help_lists_the_key_table() {
-        let help = help_text("rustune");
+        let help = help_text("waimea");
         for b in crate::keymap::BINDINGS {
             assert!(help.contains(b.desc), "{}", b.desc);
         }
@@ -389,7 +389,7 @@ mod tests {
 
     #[test]
     fn resolves_urls_files_dirs_and_reports_missing() {
-        let dir = std::env::temp_dir().join(format!("rustune-cli-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("waimea-cli-{}", std::process::id()));
         std::fs::create_dir_all(dir.join("album")).unwrap();
         std::fs::write(dir.join("album/1.mp3"), b"x").unwrap();
         std::fs::write(dir.join("album/2.mp3"), b"x").unwrap();
@@ -422,7 +422,7 @@ mod tests {
 
     #[test]
     fn inputs_are_classified_as_pages_media_urls_or_paths() {
-        let dir = std::env::temp_dir().join(format!("rustune-cls-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("waimea-cls-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let file = dir.join("song.mp3");
         std::fs::write(&file, b"x").unwrap();

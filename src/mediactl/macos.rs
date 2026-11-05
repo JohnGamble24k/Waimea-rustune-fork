@@ -93,7 +93,7 @@ pub fn host<T: Send + 'static>(app: impl FnOnce() -> T + Send + 'static) -> io::
     }
     HOSTED.store(true, Ordering::Release);
     let player = std::thread::Builder::new()
-        .name("rustune-player".into())
+        .name("waimea-player".into())
         .spawn(move || {
             let _stop = StopMainLoop;
             app()
@@ -361,7 +361,7 @@ impl NowPlaying {
     }
 }
 
-/// One line for `rustune doctor`.
+/// One line for `waimea doctor`.
 pub fn doctor() -> String {
     "[ok] media controls: macOS Now Playing and media keys".to_string()
 }
