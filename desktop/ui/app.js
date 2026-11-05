@@ -41,6 +41,15 @@ function setMode(mode) {
   else sizeWave();
 }
 
+// ---- Window shape: rounded corners, except when maximized.
+
+async function syncMaximized() {
+  document.body.classList.toggle('maximized', await appWindow.isMaximized());
+}
+
+appWindow.onResized(syncMaximized);
+syncMaximized();
+
 // ---- Library: flies in and out with one button.
 
 function setLibrary(open) {

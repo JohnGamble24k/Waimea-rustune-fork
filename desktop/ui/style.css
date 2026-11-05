@@ -14,14 +14,20 @@
 
 html, body { height: 100%; margin: 0; }
 
+/* The window itself is transparent; the page draws its rounded shape. */
+html { overflow: hidden; background: transparent; }
+
 body {
+  position: relative;
   display: flex;
   overflow: hidden;
-  background: var(--abyss);
+  border-radius: 16px;
   color: var(--spray);
   font: 15px/1.45 "Ubuntu Sans", "Ubuntu", "Noto Sans", "Cantarell", "Segoe UI", sans-serif;
   user-select: none;
 }
+
+body.maximized { border-radius: 0; }
 
 button { font: inherit; color: inherit; cursor: pointer; }
 
