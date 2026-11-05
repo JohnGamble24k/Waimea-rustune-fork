@@ -63,6 +63,11 @@ function showFace(toBack) {
   toggle.setAttribute('aria-expanded', String(toBack));
   toggle.setAttribute('aria-label', toBack ? 'Terug naar de speler' : 'Bibliotheek tonen');
   $('toggle-icon').setAttribute('d', toBack ? 'M6 6l12 12M18 6L6 18' : 'M4 6h16M4 12h16M4 18h10');
+  syncEqButton();
+}
+
+function syncEqButton() {
+  $('eq-toggle').setAttribute('aria-expanded', String(isFlipped() && source === 'eq'));
 }
 
 function flip(toBack) {
@@ -320,7 +325,7 @@ let frameCount = 0;
 
 async function waveLoop() {
   const started = performance.now();
-  if (document.body.dataset.mode === 'modern' && !document.hidden && !isFlipped()) {
+  if (document.body.dataset.mode === 'modern' && !document.hidden) {
     const playing = status.status === 'playing';
     if (playing) {
       frameCount += 1;
@@ -416,11 +421,12 @@ async function showEq() {
 }
 
 $('eq-toggle').addEventListener('click', () => {
-  if (isFlipped()) flip(false);
-  const panel = $('eq');
-  panel.hidden = !panel.hidden;
-  $('eq-toggle').setAttribute('aria-expanded', String(!panel.hidden));
-  if (!panel.hidden) showEq();
+  if (isFlipped() && source === 'eq') {
+    flip(false);
+    return;
+  }
+  show('eq');
+  if (!isFlipped()) flip(true);
 });
 $('eq-on').addEventListener('change', () => command('toggle_eq'));
 $('eq-preset').addEventListener('change', async (e) => {
@@ -648,7 +654,11 @@ function show(next) {
   add.hidden = next !== 'local';
   chips.hidden = !config || !config.chips;
   results.replaceChildren();
+  results.hidden = next === 'eq';
+  $('eq').hidden = next !== 'eq';
   say('');
+  syncEqButton();
+  if (next === 'eq') { showEq(); return; }
   if (next === 'queue') { showQueue(); return; }
   if (next === 'skins') { showLooks(); return; }
   query.placeholder = config.placeholder;

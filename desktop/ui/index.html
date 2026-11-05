@@ -15,7 +15,9 @@
       <button id="minimize" class="plain" type="button" aria-label="Minimaliseren"><svg viewBox="0 0 16 16"><path d="M3 8h10"/></svg></button>
       <button id="close" class="plain" type="button" aria-label="Sluiten"><svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
     </header>
-  <div class="flipper"><div class="card">
+  <div class="flipper">
+    <div class="sea"><canvas id="wave" aria-hidden="true"></canvas></div>
+    <div class="card">
     <main class="stage">
       <div class="modern">
     <section class="now" aria-live="polite">
@@ -29,14 +31,6 @@
         <p id="error" role="status"></p>
       </div>
     </section>
-    <div class="sea"><canvas id="wave" aria-hidden="true"></canvas></div>
-    <section id="eq" class="eq" aria-label="Equalizer" hidden>
-      <div class="eq-head">
-        <label class="switch"><input id="eq-on" type="checkbox"> Equalizer aan</label>
-        <select id="eq-preset" aria-label="Voorinstelling"></select>
-      </div>
-      <div id="eq-bands" class="eq-bands"></div>
-    </section>
       </div>
   <div class="classic">
     <canvas id="winamp" width="275" height="116" aria-label="Klassieke speler"></canvas>
@@ -48,6 +42,7 @@
     <button role="tab" data-source="local" aria-selected="true">Muziek</button>
     <button role="tab" data-source="radio" aria-selected="false">Radio</button>
     <button role="tab" data-source="queue" aria-selected="false">Afspeellijst</button>
+    <button role="tab" data-source="eq" aria-selected="false">Equalizer</button>
     <button role="tab" data-source="skins" aria-selected="false">Uiterlijk</button>
   </nav>
   <form id="search" role="search">
@@ -59,6 +54,13 @@
     <button id="add-folder" type="button">Map toevoegen</button>
   </div>
   <ul id="results" aria-live="polite"></ul>
+  <section id="eq" class="eq" aria-label="Equalizer" hidden>
+      <div class="eq-head">
+        <label class="switch"><input id="eq-on" type="checkbox"> Equalizer aan</label>
+        <select id="eq-preset" aria-label="Voorinstelling"></select>
+      </div>
+      <div id="eq-bands" class="eq-bands"></div>
+    </section>
   <p id="message" role="status"></p>
 </section>
   </div></div>
