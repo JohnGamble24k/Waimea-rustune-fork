@@ -18,9 +18,12 @@ use crate::command::Command;
 use crate::config::{self, Config};
 use crate::controller::{self, Controller};
 use crate::event::AppEvent;
+use crate::gfx::encode::base64;
 use crate::gfx::{GfxPainter, Protocol};
 use crate::ipc::{self, IpcServer};
 use crate::playback::Playback;
+use crate::providers::get_bytes;
+use crate::providers::radio::{RadioClient, StationQuery};
 use crate::skin::WinampSkin;
 use crate::state::SessionState;
 use crate::view::PlayerView;
@@ -331,6 +334,112 @@ pub fn request(line: &str) -> std::io::Result<String> {
     Ok(reply.trim_end().to_string())
 }
 
+/// A picture for the front of the player, as a `data:` URL, and who supplied it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Artwork {
+    pub url: String,
+    pub credit: &'static str,
+}
+
+const ARTWORK_MAX_BYTES: u64 = 4 << 20;
+
+/// The artist's photo, else the album cover, else the station's logo.
+/// ponytail: blocking, uncached and looked up per track; the page caches per
+/// artist. Check Deezer's and Apple's terms before this leaves the test branch.
+pub fn artwork(artist: &str, title: &str, station: &str, stream_url: &str) -> Option<Artwork> {
+    let agent = crate::net::agent();
+    let picture = |url: String, credit| {
+        let bytes = get_bytes(agent, &url, "image/*", ARTWORK_MAX_BYTES).ok()?;
+        data_url(&bytes).map(|url| Artwork { url, credit })
+    };
+    if !artist.is_empty() {
+        let query = percent_encode(artist);
+        let url = format!("https://api.deezer.com/search/artist?q={query}&limit=5");
+        let found = get_bytes(agent, &url, "application/json", 1 << 20)
+            .ok()
+            .and_then(|body| deezer_picture(&body, artist));
+        if let Some(art) = found.and_then(|url| picture(url, "Deezer")) {
+            return Some(art);
+        }
+        let term = percent_encode(&format!("{artist} {title}"));
+        let url = format!("https://itunes.apple.com/search?term={term}&entity=song&limit=5");
+        let found = get_bytes(agent, &url, "application/json", 1 << 20)
+            .ok()
+            .and_then(|body| itunes_cover(&body, artist));
+        if let Some(art) = found.and_then(|url| picture(url, "Apple Music")) {
+            return Some(art);
+        }
+    }
+    if station.is_empty() {
+        return None;
+    }
+    let client = RadioClient::discover(agent);
+    let stations = client.search(agent, &StationQuery::by_name(station)).ok()?;
+    let favicon = stations
+        .iter()
+        .find(|s| s.url == stream_url)
+        .or_else(|| {
+            stations
+                .iter()
+                .find(|s| s.name.eq_ignore_ascii_case(station))
+        })?
+        .favicon
+        .clone()?;
+    picture(favicon, "Radio Browser")
+}
+
+fn percent_encode(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    for byte in text.bytes() {
+        match byte {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
+                out.push(byte as char);
+            }
+            _ => out.push_str(&format!("%{byte:02X}")),
+        }
+    }
+    out
+}
+
+/// A wrong face is worse than none: only an exact name match counts.
+fn deezer_picture(body: &[u8], artist: &str) -> Option<String> {
+    let json: serde_json::Value = serde_json::from_slice(body).ok()?;
+    json["data"].as_array()?.iter().find(|a| {
+        a["name"]
+            .as_str()
+            .is_some_and(|n| n.eq_ignore_ascii_case(artist))
+    })?["picture_xl"]
+        .as_str()
+        .filter(|url| !url.is_empty())
+        .map(String::from)
+}
+
+fn itunes_cover(body: &[u8], artist: &str) -> Option<String> {
+    let json: serde_json::Value = serde_json::from_slice(body).ok()?;
+    let cover = json["results"].as_array()?.iter().find(|r| {
+        r["artistName"]
+            .as_str()
+            .is_some_and(|n| n.eq_ignore_ascii_case(artist))
+    })?["artworkUrl100"]
+        .as_str()?;
+    Some(cover.replace("100x100bb", "600x600bb"))
+}
+
+/// Only real images become a data URL, whatever a server claims to send.
+fn data_url(bytes: &[u8]) -> Option<String> {
+    let mime = match bytes {
+        [0x89, b'P', b'N', b'G', ..] => "image/png",
+        [0xFF, 0xD8, 0xFF, ..] => "image/jpeg",
+        [b'G', b'I', b'F', b'8', ..] => "image/gif",
+        [b'R', b'I', b'F', b'F', _, _, _, _, b'W', b'E', b'B', b'P', ..] => "image/webp",
+        [0, 0, 1, 0, ..] => "image/x-icon",
+        _ => return None,
+    };
+    let mut out = format!("data:{mime};base64,").into_bytes();
+    base64(bytes, &mut out);
+    String::from_utf8(out).ok()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -356,6 +465,28 @@ mod tests {
             current: None,
             selected: 0,
         }
+    }
+
+    #[test]
+    fn artwork_only_trusts_exact_names_and_real_images() {
+        let deezer = br#"{"data":[{"name":"Brian Simpsons","picture_xl":"https://x/wrong"},
+            {"name":"brian simpson","picture_xl":"https://x/right"}]}"#;
+        assert_eq!(
+            deezer_picture(deezer, "Brian Simpson").unwrap(),
+            "https://x/right"
+        );
+        assert_eq!(deezer_picture(deezer, "Someone Else"), None);
+        let itunes =
+            br#"{"results":[{"artistName":"A","artworkUrl100":"https://x/100x100bb.jpg"}]}"#;
+        assert_eq!(
+            itunes_cover(itunes, "A").unwrap(),
+            "https://x/600x600bb.jpg"
+        );
+        assert_eq!(percent_encode("AC/DC & co"), "AC%2FDC%20%26%20co");
+        assert!(data_url(&[0x89, b'P', b'N', b'G', 1])
+            .unwrap()
+            .starts_with("data:image/png;base64,"));
+        assert_eq!(data_url(b"<script>alert(1)</script>"), None);
     }
 
     #[test]
