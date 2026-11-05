@@ -104,6 +104,8 @@ const add = document.getElementById('add');
 const results = document.getElementById('results');
 const message = document.getElementById('message');
 
+const form = document.getElementById('search');
+
 const SOURCES = {
   local: { placeholder: 'Zoek in je muziek', live: true, empty: 'Geen muziek gevonden. Voeg bestanden of een map toe.' },
   radio: { placeholder: 'Zoek een radiostation', start: 'jazz', chips: ['Jazz', 'Hawaii', 'Lofi', 'Klassiek', 'Nieuws', 'NPO'], empty: 'Geen stations gevonden. Probeer een andere zoekterm.' },
@@ -179,8 +181,42 @@ async function play(hit, text) {
   }
 }
 
+async function showSkins() {
+  say('');
+  const names = await invoke('skins');
+  results.replaceChildren(...names.map((name) => {
+    const item = document.createElement('li');
+    const button = document.createElement('button');
+    button.type = 'button';
+    const title = document.createElement('span');
+    title.className = 'title';
+    title.textContent = name;
+    button.append(title);
+    button.addEventListener('click', async () => {
+      try {
+        await ask({ skin: name });
+        say(`Skin ${name} gekozen.`);
+        if (wake) wake();
+      } catch (e) {
+        say(e.message, true);
+      }
+    });
+    item.append(button);
+    return item;
+  }));
+}
+
 function show(next) {
   source = next;
+  form.hidden = next === 'skins';
+  if (next === 'skins') {
+    tabs.forEach((tab) => tab.setAttribute('aria-selected', String(tab.dataset.source === next)));
+    add.hidden = true;
+    chips.hidden = true;
+    results.replaceChildren();
+    showSkins();
+    return;
+  }
   const config = SOURCES[next];
   tabs.forEach((tab) => tab.setAttribute('aria-selected', String(tab.dataset.source === next)));
   query.placeholder = config.placeholder;

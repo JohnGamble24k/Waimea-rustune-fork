@@ -21,6 +21,15 @@ fn request(line: String) -> Result<String, String> {
     desktop::request(&line).map_err(|e| e.to_string())
 }
 
+/// Names of the installed skins, for the Skins tab.
+#[tauri::command(async)]
+fn skins() -> Vec<String> {
+    waimea::net::list_skins(&waimea::config::skins_dir())
+        .iter()
+        .filter_map(|p| p.file_stem()?.to_str().map(String::from))
+        .collect()
+}
+
 /// Native picker; the chosen files or folder join the queue. Returns the count.
 #[tauri::command(async)]
 fn add_music(app: AppHandle, folder: bool) -> Result<usize, String> {
@@ -53,7 +62,7 @@ fn main() {
             }
         }))
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![frame, mouse, request, add_music])
+        .invoke_handler(tauri::generate_handler![frame, mouse, request, add_music, skins])
         .setup(|app| {
             let handle = app.handle().clone();
             match Desktop::start(move || handle.exit(0)) {

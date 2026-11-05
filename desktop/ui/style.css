@@ -106,6 +106,8 @@ nav button[aria-selected="true"] {
 
 #query::placeholder { color: var(--spray); opacity: .55; }
 
+form[hidden] { display: none; }
+
 #chips, #add { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 
 #chips[hidden], #add[hidden] { display: none; }

@@ -470,6 +470,10 @@ impl Controller {
         tokio::task::spawn_blocking(move || {
             let path = path
                 .filter(|p| p.is_file())
+                .or_else(|| {
+                    let default = config::skins_dir().join(net::DEFAULT_SKIN_FILE);
+                    default.is_file().then_some(default)
+                })
                 .or_else(|| net::list_skins(&config::skins_dir()).into_iter().next());
             let result = match &path {
                 Some(p) => WinampSkin::from_wsz(p).map(Box::new),
