@@ -41,6 +41,22 @@ function setMode(mode) {
   else sizeWave();
 }
 
+// ---- Library: flies in and out with one button.
+
+function setLibrary(open) {
+  document.body.classList.toggle('library-closed', !open);
+  $('library').inert = !open;
+  $('library-toggle').setAttribute('aria-expanded', String(open));
+  $('library-toggle').setAttribute('aria-label', open ? 'Bibliotheek verbergen' : 'Bibliotheek tonen');
+  try { localStorage.setItem('waimea-library', open ? 'open' : 'closed'); } catch { /* lasts this session */ }
+}
+
+$('library-toggle').addEventListener('click', () => setLibrary(document.body.classList.contains('library-closed')));
+
+function readLibrary() {
+  try { return localStorage.getItem('waimea-library') !== 'closed'; } catch { return true; }
+}
+
 // ---- Status: what plays, polled once a second.
 
 let status = { status: 'stopped' };
@@ -246,7 +262,12 @@ async function waveLoop() {
   setTimeout(waveLoop, idle ? 250 : Math.max(5, FRAME_MS - (performance.now() - started)));
 }
 
-new ResizeObserver(sizeWave).observe(wave);
+// While the stage resizes, CSS stretches the canvas; redraw sharply when it settles.
+let waveResize;
+new ResizeObserver(() => {
+  clearTimeout(waveResize);
+  waveResize = setTimeout(sizeWave, 120);
+}).observe(wave);
 
 // ---- Equalizer panel
 
@@ -551,6 +572,7 @@ query.addEventListener('input', () => {
   typing = setTimeout(() => search(query.value.trim()), 150);
 });
 
+setLibrary(readLibrary());
 setMode(readMode());
 show('local');
 pollStatus();
